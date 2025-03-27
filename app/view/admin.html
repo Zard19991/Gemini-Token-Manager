@@ -494,7 +494,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 class="modal-title">提示</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closeModal(true)">&times;</button>
             </div>
             <div class="modal-body">
                 <p id="modal-message">内容</p>
@@ -503,7 +503,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="modal-cancel" class="secondary" onclick="closeModal()">取消</button>
+                <button id="modal-cancel" class="secondary" onclick="closeModal(true)">取消</button>
                 <button id="modal-confirm" onclick="handleModalConfirm()">确认</button>
             </div>
         </div>
