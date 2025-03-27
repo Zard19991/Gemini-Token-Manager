@@ -115,7 +115,7 @@ class ProxyService {
             const responseBuffer = await response.buffer();
             this.ctx.logger.info(`响应体读取完成，大小: ${responseBuffer.length} 字节`);
             // 正确设置HTTP响应
-            ctx.status = result.status;
+            this.ctx.status = result.status;
 
             // 处理headers (避免设置可能导致问题的头部)
             for (const [key, values] of Object.entries(result.headers)) {
@@ -124,11 +124,11 @@ class ProxyService {
                         key.toLowerCase()
                     )
                 ) {
-                    ctx.set(key, Array.isArray(values) ? values.join(", ") : values);
+                    this.ctx.set(key, Array.isArray(values) ? values.join(", ") : values);
                 }
             }
             // 设置响应体
-            ctx.body = result.body;
+            this.ctx.body = result.body;
             // return {
             //     status: response.status,
             //     headers: response.headers.raw(),
