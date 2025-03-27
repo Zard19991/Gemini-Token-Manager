@@ -445,6 +445,15 @@
                                 完全私有：只有管理员登录后才能查看
                             </small>
                         </div>
+
+                        <div style="margin-top: 20px;">
+                            <label for="http-proxy-input">HTTP代理</label>
+                            <input type="text" id="http-proxy-input" placeholder="设置HTTP代理 (例如: http://127.0.0.1:7890)">
+                            <small style="display: block; margin-top: 5px; color: #7f8c8d;">
+                                设置向Gemini API发送请求时使用的HTTP代理 (留空则不使用代理)<br>
+                                格式: http://host:port 或 https://host:port
+                            </small>
+                        </div>
                     </div>
 
                     <div class="form-group" id="guest-password-group" style="display: none;">

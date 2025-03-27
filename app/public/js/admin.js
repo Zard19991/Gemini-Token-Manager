@@ -1525,6 +1525,9 @@ async function loadSettings(attempts = 3) {
             } else {
                 document.getElementById("guest-password-input").placeholder = "设置访客密码";
             }
+            
+            // 设置HTTP代理
+            document.getElementById("http-proxy-input").value = config.httpProxy || "";
         } else {
             throw new Error(result.message || "未知错误");
         }
@@ -1605,12 +1608,16 @@ async function saveSettings(event) {
     const pageSize = parseInt(document.getElementById("page-size-input").value) || 10;
     const accessControl = document.getElementById("access-control-select").value;
     const guestPassword = document.getElementById("guest-password-input").value.trim();
+    const httpProxy = document.getElementById("http-proxy-input").value.trim();
 
     const config = {};
     if (apiKey) config.apiKey = apiKey;
     if (adminUsername) config.adminUsername = adminUsername;
     if (adminPassword) config.adminPassword = adminPassword;
     if (pageSize) config.pageSize = pageSize;
+    
+    // 添加HTTP代理配置
+    config.httpProxy = httpProxy;
 
     // 添加访问控制设置
     config.accessControl = accessControl;

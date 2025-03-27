@@ -1,6 +1,7 @@
 // app/service/proxy.js
 const { URL } = require("url");
 const fetch = require("node-fetch");
+const HttpsProxyAgent = require('https-proxy-agent');
 
 class ProxyService {
     constructor(ctx) {
@@ -30,13 +31,23 @@ class ProxyService {
         const targetUrl = `${this.base_url}${path}?key=${selectedKey}`;
 
         try {
-            // Forward the request
-            const response = await fetch(targetUrl, {
+            // 获取HTTP代理配置
+            const config = await this.ctx.service.config.get();
+            let fetchOptions = {
                 method: method || "GET",
                 headers: headers,
                 body: body ? JSON.stringify(body) : undefined,
                 redirect: "follow",
-            });
+            };
+
+            // 如果配置了HTTP代理，则使用
+            if (config.httpProxy) {
+                this.ctx.logger.info(`使用HTTP代理: ${config.httpProxy}`);
+                fetchOptions.agent = new HttpsProxyAgent(config.httpProxy);
+            }
+
+            // Forward the request
+            const response = await fetch(targetUrl, fetchOptions);
 
             // Read response as buffer to handle any content type
             const responseBuffer = await response.buffer();
@@ -59,10 +70,20 @@ class ProxyService {
 
     async checkKeyValidity(key) {
         try {
-            // Query supported models list
-            const response = await fetch(`${this.base_url}/v1/models?key=${key}`, {
+            // 获取HTTP代理配置
+            const config = await this.ctx.service.config.get();
+            let fetchOptions = {
                 method: "GET",
-            });
+            };
+            
+            // 如果配置了HTTP代理，则使用
+            if (config.httpProxy) {
+                this.ctx.logger.info(`使用HTTP代理检查密钥: ${config.httpProxy}`);
+                fetchOptions.agent = new HttpsProxyAgent(config.httpProxy);
+            }
+
+            // Query supported models list
+            const response = await fetch(`${this.base_url}/v1/models?key=${key}`, fetchOptions);
 
             if (!response.ok) {
                 let errorMessage = "余额模型列表失败";
