@@ -62,7 +62,9 @@ function showModal(options = {}) {
     }
 
     // 保存回调
-    modalCallback = options.callback;
+    if (options.callback) {
+        modalCallback = options.callback;
+    }
 
     // 显示弹窗
     modal.classList.add("show");
@@ -74,36 +76,58 @@ function showModal(options = {}) {
 }
 
 // 关闭弹窗
-function closeModal() {
+function closeModal(isCancel = true) {
     const modal = document.getElementById("custom-modal");
     modal.classList.remove("show");
-    modalCallback = null;
+    
+    // 如果是取消操作且有回调，调用回调并传入false
+    if (isCancel && modalCallback) {
+        try {
+            modalCallback(false);
+        } catch (e) {
+            console.error("执行取消回调出错:", e);
+        }
+    }
+    
+    // 清理回调引用，但只在取消操作后或确认操作已经处理过回调后
+    if (isCancel) {
+        modalCallback = null;
+    }
 }
 
 // 处理弹窗确认
 function handleModalConfirm() {
     const input = document.getElementById("modal-input");
     const value = input.value;
+    const hasValue = input.style.display !== 'none' && input.value !== '';
+
+    // 如果是输入框，传入输入的值；否则传入 true 表示用户确认
+    const callbackValue = hasValue ? value : true;
 
     if (modalCallback) {
-        modalCallback(value);
+        modalCallback(callbackValue);
+    } else {
+        console.warn("没有找到modalCallback");
     }
 
-    closeModal();
+    // 使用false参数调用closeModal，表示这不是取消操作
+    closeModal(false);
 }
 
 // 确认对话框
 function confirmDialog(message, callback, options = {}) {
+
+    // 直接将回调传递给 showModal
     showModal({
         title: options.title || "确认操作",
         message: message,
         confirmText: options.confirmText || "确认",
         cancelText: options.cancelText || "取消",
         confirmClass: options.confirmClass || "danger",
-        callback: result => {
-            if (callback) callback(true);
-        },
         showCancel: true,
+        callback: function(result) {
+            if (callback) callback(result);
+        }
     });
 }
 
@@ -593,7 +617,7 @@ document.addEventListener("DOMContentLoaded", () => {
             // 只有当状态不一致时才更新，避免不必要的事件触发
             if (checkbox.checked !== isChecked) {
                 checkbox.checked = isChecked;
-                
+
                 // 调用toggleKeySelection函数更新数据
                 const keyValue = checkbox.closest("tr").getAttribute("data-key");
                 toggleKeySelection(keyValue, isChecked);
@@ -847,18 +871,18 @@ document.addEventListener("DOMContentLoaded", () => {
             if (checkboxes.length === 0) {
                 return; // 如果没有复选框则不操作
             }
-            
+
             checkboxes.forEach(checkbox => {
                 // 只有当状态不一致时才更新，避免不必要的事件触发
                 if (checkbox.checked !== this.checked) {
                     checkbox.checked = this.checked;
-                    
+
                     // 调用toggleKeySelection函数更新数据
                     const keyValue = checkbox.closest("tr").getAttribute("data-key");
                     toggleKeySelection(keyValue, this.checked);
                 }
             });
-            
+
             // 显示通知
             if (this.checked) {
                 showToast(`已选中全部 ${checkboxes.length} 个密钥`);
@@ -880,29 +904,39 @@ document.addEventListener("DOMContentLoaded", () => {
     // 监听每页显示数量变更
     const keysPerPageSelect = document.getElementById("keys-per-page");
     if (keysPerPageSelect) {
-        keysPerPageSelect.addEventListener("change", function() {
+        keysPerPageSelect.addEventListener("change", function () {
             loadAllKeys(1); // 切换每页显示数量时，重置到第一页
         });
     }
-    
+
     // 监听搜索输入框
     const searchInput = document.getElementById("search-input");
     if (searchInput) {
-        searchInput.addEventListener("keypress", function(e) {
+        searchInput.addEventListener("keypress", function (e) {
             if (e.key === "Enter") {
                 loadAllKeys(1); // 搜索时重置到第一页
             }
         });
     }
+
+    // 隐藏分页控件区域
+    const paginationContainer = document.getElementById("pagination-container");
+    if (paginationContainer) {
+        paginationContainer.style.display = "none";
+    }
+    
+    // 隐藏每页显示选项
+    const pageSizeControl = document.querySelector(".page-size-control");
+    if (pageSizeControl) {
+        pageSizeControl.style.display = "none";
+    }
 });
 
 // 设置功能
 async function loadSettings(attempts = 3) {
-    console.log("开始加载设置...");
     try {
         // 添加一个随机参数防止缓存
         const timestamp = new Date().getTime();
-        console.log("发送配置请求...");
         const response = await fetch(`/admin/api/config?_=${timestamp}`, {
             // 添加超时处理
             signal: AbortSignal.timeout(10000), // 10秒超时
@@ -912,12 +946,9 @@ async function loadSettings(attempts = 3) {
             throw new Error(`加载配置失败: 状态码 ${response.status}`);
         }
 
-        console.log("成功获取响应，解析JSON...");
         const result = await response.json();
-        console.log("解析的响应数据:", result);
 
         if (result.success) {
-            console.log("加载到的配置数据:", result.data);
             const config = result.data;
 
             // 设置各个字段的值，增加错误处理
@@ -929,14 +960,12 @@ async function loadSettings(attempts = 3) {
             const accessControlSelect = document.getElementById("access-control-select");
             const guestPasswordInput = document.getElementById("guest-password-input");
 
-            console.log("正在设置表单字段值...");
             if (apiKeyInput) apiKeyInput.value = config.apiKey || "";
             if (adminUsernameInput) adminUsernameInput.value = config.adminUsername || "";
             if (adminPasswordInput) adminPasswordInput.value = ""; // 不预填密码
             if (pageSizeInput) pageSizeInput.value = config.pageSize || 10;
             if (httpProxyInput) httpProxyInput.value = config.httpProxy || "";
 
-            console.log("设置访问控制模式:", config.accessControl);
             // 设置访问控制选项
             if (accessControlSelect) {
                 accessControlSelect.value = config.accessControl || "open";
@@ -956,7 +985,6 @@ async function loadSettings(attempts = 3) {
                     : "设置访客密码";
             }
 
-            console.log("设置加载完成");
             showToast("设置加载成功");
         } else {
             throw new Error(result.message || "未知错误");
@@ -966,7 +994,6 @@ async function loadSettings(attempts = 3) {
 
         // 如果还有重试次数，尝试重试
         if (attempts > 0) {
-            console.log(`尝试重新加载设置，剩余尝试次数: ${attempts - 1}`);
             await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒再重试
             return loadSettings(attempts - 1);
         }
@@ -1019,7 +1046,6 @@ async function saveSettings(event) {
             data.guestPassword = guestPassword;
         }
 
-        console.log("正在保存设置...", data);
 
         // 发送请求
         const response = await fetch("/admin/api/update-config", {
@@ -1108,14 +1134,20 @@ async function batchDeleteSelectedKeys() {
         return;
     }
 
+    // 将 Set 转换为数组以防止后续操作中的引用问题
+    const keysToDelete = Array.from(selectedKeys);
+    
     confirmDialog(
-        `确定要删除选中的 ${selectedKeys.size} 个密钥吗？此操作不可恢复。`,
+        `确定要删除选中的 ${keysToDelete.length} 个密钥吗？此操作不可恢复。`,
         async confirmed => {
-            if (!confirmed) return;
+            if (!confirmed) {
+                console.warn("用户取消了删除操作");
+                return;
+            }
 
             try {
-                // 将 Set 转换为数组
-                const keysToDelete = Array.from(selectedKeys);
+                // 显示加载中提示
+                showToast("正在删除密钥，请稍候...");
 
                 const response = await fetch("/admin/api/delete-keys", {
                     method: "POST",
@@ -1126,7 +1158,9 @@ async function batchDeleteSelectedKeys() {
                 });
 
                 if (!response.ok) {
-                    throw new Error("删除密钥失败");
+                    const errorText = await response.text();
+                    console.error("服务器返回错误:", errorText);
+                    throw new Error(`删除密钥失败: ${response.status} ${errorText}`);
                 }
 
                 const result = await response.json();
@@ -1145,6 +1179,11 @@ async function batchDeleteSelectedKeys() {
                 console.error("删除密钥时出错:", error);
                 showToast(`删除密钥失败: ${error.message}`, true);
             }
+        },
+        {
+            confirmText: "确认删除",
+            cancelText: "取消",
+            title: "确认批量删除"
         }
     );
 }
@@ -1152,18 +1191,14 @@ async function batchDeleteSelectedKeys() {
 // 加载所有密钥到密钥管理页面
 async function loadAllKeys(page = 1) {
     try {
-        const keysPerPageElement = document.getElementById("keys-per-page");
-        const keysPerPage = keysPerPageElement ? parseInt(keysPerPageElement.value) || 10 : 10;
-
         const searchInputElement = document.getElementById("search-input");
         const searchQuery = searchInputElement ? searchInputElement.value.trim() : "";
 
-        // 构建查询参数
+        // 构建查询参数 - 设置很大的limit值以获取所有密钥
         const params = new URLSearchParams({
-            page: page,
-            limit: keysPerPage,
             sort: currentSortField,
             order: currentSortOrder,
+            limit: 10000 // 设置一个很大的值来获取所有密钥
         });
 
         // 如果有搜索查询，添加到参数中
@@ -1180,7 +1215,7 @@ async function loadAllKeys(page = 1) {
         const result = await response.json();
 
         if (result.success) {
-            renderKeysTable(result.data, result.total, page, keysPerPage);
+            renderKeysTable(result.data, result.total);
             updateSelectionStatus();
         } else {
             throw new Error(result.message || "加载密钥失败");
@@ -1192,7 +1227,7 @@ async function loadAllKeys(page = 1) {
 }
 
 // 渲染密钥表格
-function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
+function renderKeysTable(keys, totalKeys) {
     const tableBody = document.getElementById("keys-table-body");
     const paginationContainer = document.getElementById("pagination-container");
 
@@ -1203,6 +1238,17 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         tableBody.innerHTML = '<tr><td colspan="8" class="text-center">没有找到密钥</td></tr>';
         paginationContainer.innerHTML = "";
         return;
+    }
+
+    // 隐藏分页容器
+    if (paginationContainer) {
+        paginationContainer.style.display = "none";
+    }
+
+    // 隐藏每页显示选项
+    const pageSizeControl = document.querySelector(".page-size-control");
+    if (pageSizeControl) {
+        pageSizeControl.style.display = "none";
     }
 
     // 填充表格数据
@@ -1228,8 +1274,8 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
             row.classList.add("selected");
         }
 
-        // 计算序号
-        const itemNumber = (currentPage - 1) * keysPerPage + index + 1;
+        // 序号直接使用索引加1
+        const itemNumber = index + 1;
 
         row.innerHTML = `
             <td>${itemNumber}</td>
@@ -1266,7 +1312,7 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         // 1. 复选框事件
         const checkbox = row.querySelector(".key-checkbox");
         if (checkbox) {
-            checkbox.addEventListener("change", function() {
+            checkbox.addEventListener("change", function () {
                 toggleKeySelection(key.key, this.checked);
             });
         }
@@ -1274,7 +1320,7 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         // 2. 检测按钮事件
         const checkBtn = row.querySelector(".check-key-btn");
         if (checkBtn) {
-            checkBtn.addEventListener("click", function() {
+            checkBtn.addEventListener("click", function () {
                 checkKey(key.key);
             });
         }
@@ -1282,7 +1328,7 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         // 3. 复制按钮事件
         const copyBtn = row.querySelector(".copy-key-btn");
         if (copyBtn) {
-            copyBtn.addEventListener("click", function() {
+            copyBtn.addEventListener("click", function () {
                 copyKey(key.key);
             });
         }
@@ -1290,7 +1336,7 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         // 4. 删除按钮事件
         const deleteBtn = row.querySelector(".delete-key-btn");
         if (deleteBtn) {
-            deleteBtn.addEventListener("click", function() {
+            deleteBtn.addEventListener("click", function () {
                 deleteKey(key.key);
             });
         }
@@ -1298,62 +1344,11 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         tableBody.appendChild(row);
     });
 
-    // 创建分页
-    renderPagination(totalKeys, currentPage, keysPerPage);
-
     // 更新选择状态显示
     updateSelectionStatus();
-    
+
     // 检查并同步全选框状态
     check_all_selected();
-}
-
-// 创建分页控件
-function renderPagination(totalItems, currentPage, itemsPerPage) {
-    const paginationContainer = document.getElementById("pagination-container");
-    paginationContainer.innerHTML = "";
-
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    if (totalPages <= 1) {
-        return;
-    }
-
-    const ul = document.createElement("ul");
-    ul.className = "pagination";
-
-    // 上一页按钮
-    const prevLi = document.createElement("li");
-    prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
-    prevLi.innerHTML = `<a class="page-link" ${
-        currentPage > 1 ? `onclick="loadAllKeys(${currentPage - 1})"` : ""
-    }>上一页</a>`;
-    ul.appendChild(prevLi);
-
-    // 页码按钮
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + 4);
-
-    if (endPage - startPage < 4 && startPage > 1) {
-        startPage = Math.max(1, endPage - 4);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-        const pageLi = document.createElement("li");
-        pageLi.className = `page-item ${i === currentPage ? "active" : ""}`;
-        pageLi.innerHTML = `<a class="page-link" onclick="loadAllKeys(${i})">${i}</a>`;
-        ul.appendChild(pageLi);
-    }
-
-    // 下一页按钮
-    const nextLi = document.createElement("li");
-    nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
-    nextLi.innerHTML = `<a class="page-link" ${
-        currentPage < totalPages ? `onclick="loadAllKeys(${currentPage + 1})"` : ""
-    }>下一页</a>`;
-    ul.appendChild(nextLi);
-
-    paginationContainer.appendChild(ul);
 }
 
 // 加载最近添加的密钥到仪表盘
@@ -1457,19 +1452,19 @@ function updateSelectionStatus() {
     if (exportSelectedBtn) {
         exportSelectedBtn.disabled = selectedKeys.size === 0;
     }
-    
+
     // 更新检测和删除按钮状态
     const checkSelectedBtn = document.getElementById("check-selected-keys");
     const deleteSelectedBtn = document.getElementById("delete-selected-keys");
-    
+
     if (checkSelectedBtn) {
         checkSelectedBtn.disabled = selectedKeys.size === 0;
     }
-    
+
     if (deleteSelectedBtn) {
         deleteSelectedBtn.disabled = selectedKeys.size === 0;
     }
-    
+
     // 确保表头全选框状态与实际选择状态一致
     check_all_selected();
 }
@@ -1479,15 +1474,15 @@ function check_all_selected() {
     const selectAllTableCheckbox = document.getElementById("select-all-table");
     if (selectAllTableCheckbox) {
         const checkboxes = document.querySelectorAll(".key-checkbox");
-        
+
         // 如果没有复选框或表格为空，则取消选中表头复选框
         if (checkboxes.length === 0) {
             selectAllTableCheckbox.checked = false;
             return;
         }
-        
+
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-        
+
         // 避免不必要的状态变更，仅当状态不一致时才更新
         if (selectAllTableCheckbox.checked !== allChecked) {
             selectAllTableCheckbox.checked = allChecked;
@@ -1515,7 +1510,7 @@ function toggleKeySelection(key, isSelected) {
 
     // 更新显示
     updateSelectionStatus();
-    
+
     // 检查是否所有行都被选中，并更新表头全选框状态
     check_all_selected();
 }
@@ -1534,12 +1529,82 @@ async function batchCheckSelectedKeys() {
     const progressContainer = document.getElementById("progress-container");
     const progressBar = document.getElementById("progress-fill");
     const progressText = document.getElementById("progress-text");
+    const progressTitle = document.querySelector(".progress-title");
+    const progressSuccessRate = document.getElementById("progress-success-rate");
+    const progressSpeed = document.getElementById("progress-speed");
+    const progressEta = document.getElementById("progress-eta");
+    const progressElapsed = document.getElementById("progress-elapsed");
     const cancelButton = document.getElementById("stop-batch-process");
 
-    if (progressContainer) progressContainer.style.display = "block";
+    if (progressContainer) {
+        progressContainer.style.display = "block";
+        // 添加active类以显示进度容器
+        setTimeout(() => {
+            progressContainer.classList.add("active");
+        }, 10);
+    }
     if (progressBar) progressBar.style.width = "0%";
     if (progressText) progressText.textContent = "0/" + selectedKeys.size;
+    if (progressTitle) progressTitle.textContent = "检查密钥余额中";
+    if (progressSuccessRate) progressSuccessRate.textContent = "成功: 0";
     if (cancelButton) cancelButton.style.display = "inline-block";
+
+    // 初始化进度统计变量
+    const startTime = Date.now();
+    let successCount = 0;
+    let lastUpdateTime = startTime;
+    let lastCompletedCount = 0;
+
+    // 更新进度详情的函数
+    const updateProgressDetails = (completed) => {
+        // 计算已用时间
+        const elapsedMs = Date.now() - startTime;
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+        const remainingSeconds = elapsedSeconds % 60;
+        const elapsedText = elapsedMinutes > 0 
+            ? `${elapsedMinutes}分${remainingSeconds}秒`
+            : `${elapsedSeconds}秒`;
+        
+        if (progressElapsed) progressElapsed.textContent = elapsedText;
+        
+        // 计算成功率
+        if (progressSuccessRate && completed > 0) {
+            const successRate = ((successCount / completed) * 100).toFixed(1);
+            progressSuccessRate.textContent = `成功: ${successCount} (${successRate}%)`;
+        }
+
+        // 计算处理速度
+        if (progressSpeed && completed > 0) {
+            const timeDiff = Date.now() - lastUpdateTime;
+            if (timeDiff > 0 && completed > lastCompletedCount) {
+                const countDiff = completed - lastCompletedCount;
+                const speed = (countDiff / timeDiff) * 1000; // 每秒处理数量
+                progressSpeed.textContent = `${speed.toFixed(2)} 个/秒`;
+                
+                // 更新预计剩余时间
+                if (progressEta) {
+                    const remaining = selectedKeys.size - completed;
+                    if (speed > 0) {
+                        const etaSeconds = Math.ceil(remaining / speed);
+                        if (etaSeconds < 60) {
+                            progressEta.textContent = `约 ${etaSeconds} 秒`;
+                        } else {
+                            const etaMinutes = Math.floor(etaSeconds / 60);
+                            const remainingSecs = etaSeconds % 60;
+                            progressEta.textContent = `约 ${etaMinutes}分${remainingSecs}秒`;
+                        }
+                    } else {
+                        progressEta.textContent = "计算中...";
+                    }
+                }
+                
+                // 更新最后记录的时间和完成数
+                lastUpdateTime = Date.now();
+                lastCompletedCount = completed;
+            }
+        }
+    };
 
     // 获取并验证间隔设置
     const intervalType = document.getElementById("interval-type").value;
@@ -1568,13 +1633,20 @@ async function batchCheckSelectedKeys() {
                 const batchPromises = batch.map(key => checkKeyWithRetry(key));
                 const batchResults = await Promise.allSettled(batchPromises);
 
+                // 更新成功计数
+                successCount += batchResults.filter(r => r.status === "fulfilled").length;
+                
                 results.push(...batchResults);
                 completed += batch.length;
 
                 // 更新进度
                 if (progressBar)
                     progressBar.style.width = (completed / selectedKeys.size) * 100 + "%";
-                if (progressText) progressText.textContent = completed + "/" + selectedKeys.size;
+                if (progressText) 
+                    progressText.textContent = `${completed}/${selectedKeys.size} (${Math.round(completed / selectedKeys.size * 100)}%)`;
+                
+                // 更新详细进度信息
+                updateProgressDetails(completed);
             }
 
             // 处理结果
@@ -1608,14 +1680,20 @@ async function batchCheckSelectedKeys() {
                 try {
                     const result = await checkKeyWithRetry(key);
                     results.push({ status: "fulfilled", value: result });
+                    successCount++;
                 } catch (error) {
                     results.push({ status: "rejected", reason: error });
                 }
 
                 // 更新进度
+                const completed = i + 1;
                 if (progressBar)
-                    progressBar.style.width = ((i + 1) / selectedKeys.size) * 100 + "%";
-                if (progressText) progressText.textContent = i + 1 + "/" + selectedKeys.size;
+                    progressBar.style.width = (completed / selectedKeys.size) * 100 + "%";
+                if (progressText) 
+                    progressText.textContent = `${completed}/${selectedKeys.size} (${Math.round(completed / selectedKeys.size * 100)}%)`;
+                
+                // 更新详细进度信息
+                updateProgressDetails(completed);
             }
 
             // 处理结果
@@ -1625,7 +1703,13 @@ async function batchCheckSelectedKeys() {
         showToast(error.message, true);
     } finally {
         // 隐藏进度条
-        if (progressContainer) progressContainer.style.display = "none";
+        if (progressContainer) {
+            progressContainer.classList.remove("active");
+            // 等待动画完成后隐藏
+            setTimeout(() => {
+                progressContainer.style.display = "none";
+            }, 400); // 与CSS中的过渡时间保持一致
+        }
         if (cancelButton) cancelButton.style.display = "none";
     }
 }
@@ -1714,6 +1798,18 @@ async function checkKey(key) {
 function stopBatchProcessing() {
     isBatchProcessingStopped = true;
     showToast("正在停止批量处理...");
+}
+
+// 隐藏进度容器
+function hideProgress() {
+    const progressContainer = document.getElementById("progress-container");
+    if (progressContainer) {
+        progressContainer.classList.remove("active");
+        // 等待动画完成后隐藏
+        setTimeout(() => {
+            progressContainer.style.display = "none";
+        }, 400); // 与CSS中的过渡时间保持一致
+    }
 }
 
 // 更新所有密钥余额
@@ -1818,16 +1914,54 @@ async function addBulkKeys() {
         const result = await response.json();
 
         if (result.success) {
-            showToast(`成功添加 ${result.added} 个密钥，已存在 ${result.existing} 个`);
+            showToast(`成功添加 ${result.count} 个密钥，已存在 ${result.addedKeys} 个`);
             textarea.value = ""; // 清空输入框
 
             // 关闭批量添加模态框
             const modal = document.getElementById("bulk-add-modal");
             if (modal) modal.classList.remove("show");
-
+            
             // 刷新数据
-            loadAllKeys();
+            await loadAllKeys();
             loadDashboard();
+            
+            // 自动选中新添加的密钥
+            if (result.keyList && result.keyList.length > 0) {
+                // 清除之前的选择
+                selectedKeys.clear();
+                
+                // 将新添加的密钥添加到选中集合
+                result.keyList.forEach(key => {
+                    selectedKeys.add(key);
+                });
+                
+                // 更新UI中的选中状态
+                updateSelectionStatus();
+                
+                // 更新表格中的复选框
+                result.keyList.forEach(key => {
+                    const row = document.querySelector(`tr[data-key="${key}"]`);
+                    if (row) {
+                        const checkbox = row.querySelector(".key-checkbox");
+                        if (checkbox) checkbox.checked = true;
+                        row.classList.add("selected");
+                    }
+                });
+                
+                // 确保检测按钮被启用
+                const checkSelectedBtn = document.getElementById("check-selected-keys");
+                if (checkSelectedBtn) {
+                    checkSelectedBtn.disabled = false;
+                }
+                
+                const deleteSelectedBtn = document.getElementById("delete-selected-keys");
+                if (deleteSelectedBtn) {
+                    deleteSelectedBtn.disabled = false;
+                }
+                
+                // 直接执行批量检测，无需确认对话框
+                batchCheckSelectedKeys();
+            }
         } else {
             throw new Error(result.message || "批量添加密钥失败");
         }
