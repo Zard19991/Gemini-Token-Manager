@@ -943,7 +943,7 @@ async function saveSettings(event) {
         console.log("正在保存设置...", data);
         
         // 发送请求
-        const response = await fetch("/admin/api/config", {
+        const response = await fetch("/admin/api/update-config", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
