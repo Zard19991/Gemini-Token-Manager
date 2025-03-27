@@ -10,7 +10,7 @@ class AdminController extends Controller {
 
     async getConfig() {
         const { ctx } = this;
-        const config = await ctx.service.config.getConfig();
+        const config = await ctx.service.config.get();
         ctx.body = {
             success: true,
             data: config,
