@@ -57,17 +57,15 @@ class AdminController extends Controller {
             return;
         }
 
-        const keyList = keys
-            .split("\n")
-            .map(k => k.trim())
-            .filter(k => k);
+        const keyList = keys.map(k => k.trim()).filter(k => k);
 
         const addedKeys = await ctx.service.key.addKeys(keyList, 0);
 
         ctx.body = {
             success: true,
             count: addedKeys.length,
-            addedKeys,
+            addedKeys: addedKeys.length,
+            keyList,
             autoCheck: true,
         };
     }
