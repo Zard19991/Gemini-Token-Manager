@@ -117,27 +117,11 @@
                     <div>
                         <div class="code-header">
                             <span>示例请求</span>
-                            <button class="copy-btn" data-copy="
-    curl -X POST '<your-project-domain>/v1/chat/completions' \\
-    -H 'Content-Type: application/json' \\
-    -H 'Authorization: Bearer your-api-key-here' \\
-    -d '{'model': 'Qwen/Qwen2.5-7B-Instruct', 'messages': [{'role': 'user', 'content': '你好'}], 'stream': true}'
-    ">复制</button>
+                            <button class="copy-btn" data-copy="">复制</button>
                         </div>
 
                         <div class="api-code">
-                            <span class="comment"># 向负载均衡服务发送请求</span>
-                            curl -X POST '<your-project-domain>/v1/chat/completions' \\
-                                -H 'Content-Type: application/json' \\
-                                -H 'Authorization: Bearer ${authToken}' \\
-                                -d '{
-                                <span class="string">"model"</span>: <span
-                                    class="string">"Qwen/Qwen2.5-7B-Instruct"</span>,
-                                <span class="string">"messages"</span>: [{<span class="string">"role"</span>: <span
-                                    class="string">"user"</span>, <span class="string">"content"</span>: <span
-                                    class="string">"你好"</span>}],
-                                <span class="string">"stream"</span>: true
-                                }'
+                            <span class="comment"># 向Gemini负载均衡服务发送请求</span>
                         </div>
                     </div>
 
@@ -147,18 +131,22 @@
                     <div>
                         <div class="code-header">
                             <span>端点替换示例</span>
-                            <button class="copy-btn" data-copy="# 原始API地址
-      https://api.siliconflow.cn/v1/...
-    
-      # 替换为
-      <your-project-domain>/v1/...">复制</button>
+                            <button class="copy-btn" data-copy="">复制</button>
                         </div>
                         <div class="api-code">
-                            <span class="comment"># 原始API地址</span>
-                            https://api.siliconflow.cn/v1/...
+                        </div>
+                    </div>
 
-                            <span class="comment"># 替换为</span>
-                            <your-project-domain>/v1/...
+                    <h3>Python调用示例</h3>
+                    <p>以下是使用Python发送请求的示例代码：</p>
+
+                    <div>
+                        <div class="code-header">
+                            <span>Python示例</span>
+                            <button class="copy-btn" data-copy="">复制</button>
+                        </div>
+                        <div class="api-code python-code">
+                            <span class="comment"># 使用Python发送请求到Gemini负载均衡服务</span>
                         </div>
                     </div>
 
@@ -188,3 +176,146 @@
 
 </html>
 <script src="/js/home.js"></script>
+
+<script>
+    const url = new URL(window.location.href);
+    const projectDomain = url.origin;
+    const copyCodeOne = `curl -X POST '${projectDomain}/v1/models/gemini-2.0-flash:generateContent' \\
+-H 'Content-Type: application/json' \\
+-H 'Authorization: Bearer your-api-key-here' \\
+-d '{
+  "contents": [
+    {
+      "parts": [
+        {
+          "text": "你好，请介绍一下你自己"
+        }
+      ]
+    }
+  ]
+}'`
+
+    const copyCodeTwo = `# 原始API地址
+https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash...
+
+# 替换为
+${projectDomain}/v1/models/gemini-2.0-flash...`
+
+    // 添加Python示例代码
+    const copyCodePython = `import requests
+import json
+
+url = "${projectDomain}/v1/models/gemini-2.0-flash:generateContent"
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer your-api-key-here"
+}
+payload = {
+    "contents": [
+        {
+            "parts": [
+                {
+                    "text": "你好，请介绍一下你自己"
+                }
+            ]
+        }
+    ]
+}
+
+response = requests.post(url, headers=headers, json=payload)
+print(response.json())`;
+
+    // 使用JavaScript替换复制按钮的data-copy属性和代码示例显示
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取所有代码块和复制按钮
+        const apiCodeBlocks = document.querySelectorAll('.api-code');
+        const copyBtns = document.querySelectorAll('.copy-btn');
+
+        // 设置第一个代码块(curl示例)和复制按钮
+        if (apiCodeBlocks.length >= 1 && copyBtns.length >= 1) {
+            copyBtns[0].setAttribute('data-copy', copyCodeOne);
+
+            // 设置第一个代码块内容(保留注释)
+            const firstBlock = apiCodeBlocks[0];
+            const comment = firstBlock.querySelector('.comment');
+            const commentHTML = comment ? comment.outerHTML : '';
+
+            // 格式化展示代码(添加高亮)
+            let displayCode = copyCodeOne
+                .replace(/^curl/, `curl`)
+                .replace(/'/g, "'")
+                .replace(/\\$/gm, "\\")
+                .replace(/-d '({.*})'/, (match, p1) => {
+                    // 格式化JSON部分
+                    return `-d '{
+  <span class="string">"contents"</span>: [
+    {
+      <span class="string">"parts"</span>: [
+        {
+          <span class="string">"text"</span>: <span class="string">"你好，请介绍一下你自己"</span>
+        }
+      ]
+    }
+  ]
+}'`;
+                });
+
+            firstBlock.innerHTML = `${commentHTML}\n${displayCode}`;
+        }
+
+        // 设置第二个代码块(端点替换示例)和复制按钮
+        if (apiCodeBlocks.length >= 2 && copyBtns.length >= 2) {
+            copyBtns[1].setAttribute('data-copy', copyCodeTwo);
+
+            // 构建第二个代码块内容
+            const lines = copyCodeTwo.split('\n');
+            let formattedCode = '';
+
+            lines.forEach(line => {
+                if (line.startsWith('#')) {
+                    formattedCode += `<span class="comment">${line}</span>\n`;
+                } else {
+                    formattedCode += `${line}\n`;
+                }
+            });
+
+            apiCodeBlocks[1].innerHTML = formattedCode;
+        }
+
+        // 设置第三个代码块(Python示例)和复制按钮
+        if (apiCodeBlocks.length >= 3 && copyBtns.length >= 3) {
+            copyBtns[2].setAttribute('data-copy', copyCodePython);
+
+            // 构建Python代码块内容
+            let pythonFormattedCode = copyCodePython
+                .replace(/import/g, '<span class="keyword">import</span>')
+                .replace(/url =/g, '<span class="variable">url</span> =')
+                .replace(/headers =/g, '<span class="variable">headers</span> =')
+                .replace(/payload =/g, '<span class="variable">payload</span> =')
+                .replace(/response =/g, '<span class="variable">response</span> =')
+                .replace(/"([^"]+)":/g, '<span class="string">"$1"</span>:')
+                .replace(/"Bearer[^"]+"/g, '<span class="string">"Bearer your-api-key-here"</span>')
+                .replace(/"你好，请介绍一下你自己"/g, '<span class="string">"你好，请介绍一下你自己"</span>');
+
+            apiCodeBlocks[2].innerHTML = `<span class="comment"># 使用Python发送请求到Gemini负载均衡服务</span>\n${pythonFormattedCode}`;
+        }
+    });
+
+    // 添加复制功能
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('copy-btn')) {
+            const textToCopy = e.target.getAttribute('data-copy');
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // 显示复制成功
+                    e.target.textContent = '已复制';
+                    setTimeout(() => {
+                        e.target.textContent = '复制';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('复制失败: ', err);
+                });
+        }
+    });
+</script>
