@@ -72,7 +72,7 @@
                                 <th>状态</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="recent-keys-table-body">
                             <tr>
                                 <td colspan="4" class="empty-state">加载中...</td>
                             </tr>
@@ -399,12 +399,26 @@
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="keys-table-body">
                             <tr>
-                                <td colspan="6" class="empty-state">加载中...</td>
+                                <td colspan="8" class="empty-state">加载中...</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- 添加分页控制 -->
+                <div class="pagination-controls">
+                    <div class="page-size-control">
+                        <label for="keys-per-page">每页显示:</label>
+                        <select id="keys-per-page">
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div id="pagination-container" class="pagination-container"></div>
                 </div>
             </div>
 

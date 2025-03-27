@@ -152,6 +152,12 @@ let balanceDistChart, keyStatusChart, balanceTrendChart;
 
 // 增强的仪表盘加载函数
 function loadDashboard() {
+    // 检查是否在仪表盘页面
+    if (!document.getElementById("dashboard") || !document.getElementById("dashboard").classList.contains("active")) {
+        console.warn("当前不在仪表盘页面，跳过加载");
+        return;
+    }
+
     loadStats();
     loadRecentKeys();
 
@@ -1060,8 +1066,11 @@ async function batchDeleteSelectedKeys() {
 // 加载所有密钥到密钥管理页面
 async function loadAllKeys(page = 1) {
     try {
-        const keysPerPage = parseInt(document.getElementById("keys-per-page").value) || 10;
-        const searchQuery = document.getElementById("search-input").value.trim();
+        const keysPerPageElement = document.getElementById("keys-per-page");
+        const keysPerPage = keysPerPageElement ? parseInt(keysPerPageElement.value) || 10 : 10;
+        
+        const searchInputElement = document.getElementById("search-input");
+        const searchQuery = searchInputElement ? searchInputElement.value.trim() : "";
         
         // 构建查询参数
         const params = new URLSearchParams({
@@ -1105,13 +1114,13 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
     tableBody.innerHTML = "";
     
     if (keys.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">没有找到密钥</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center">没有找到密钥</td></tr>';
         paginationContainer.innerHTML = "";
         return;
     }
     
     // 填充表格数据
-    keys.forEach(key => {
+    keys.forEach((key, index) => {
         const row = document.createElement("tr");
         row.setAttribute("data-key", key.key);
         
@@ -1133,18 +1142,22 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
             row.classList.add("selected");
         }
         
+        // 计算序号
+        const itemNumber = (currentPage - 1) * keysPerPage + index + 1;
+        
         row.innerHTML = `
+            <td>${itemNumber}</td>
             <td>
                 <input type="checkbox" class="key-checkbox" ${isSelected ? 'checked' : ''} 
                        onchange="toggleKeySelection('${key.key}', this.checked)">
             </td>
             <td class="key-cell">${key.key}</td>
             <td>${key.balance || "0.00"}</td>
+            <td>${key.lastUpdated ? new Date(key.lastUpdated).toLocaleString() : '从未'}</td>
+            <td>${new Date(key.added).toLocaleString()}</td>
             <td>${key.lastError ? '<span class="error-text">失败</span>' : 
                    (parseFloat(key.balance) <= 0 ? '<span class="warning-text">余额不足</span>' : 
                    '<span class="success-text">正常</span>')}</td>
-            <td>${new Date(key.added).toLocaleString()}</td>
-            <td>${key.lastUpdated ? new Date(key.lastUpdated).toLocaleString() : '从未'}</td>
             <td>
                 <div class="actions">
                     <button class="btn btn-sm btn-outline" onclick="checkKey('${key.key}')">
@@ -1217,6 +1230,12 @@ function renderPagination(totalItems, currentPage, itemsPerPage) {
 // 加载最近添加的密钥到仪表盘
 async function loadRecentKeys() {
     try {
+        // 检查表格主体元素是否存在
+        if (!document.getElementById("recent-keys-table-body")) {
+            console.warn("未找到最近密钥表格元素，可能不在仪表盘页面");
+            return;
+        }
+        
         const response = await fetch("/admin/api/keys?limit=5&sort=added&order=desc");
         
         if (!response.ok) {
@@ -1240,11 +1259,17 @@ async function loadRecentKeys() {
 function renderRecentKeysTable(keys) {
     const tableBody = document.getElementById("recent-keys-table-body");
     
+    // 检查表格主体元素是否存在
+    if (!tableBody) {
+        console.warn("未找到最近密钥表格主体元素");
+        return;
+    }
+    
     // 清空表格
     tableBody.innerHTML = "";
     
     if (keys.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center">没有找到密钥</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center">没有找到密钥</td></tr>';
         return;
     }
     
@@ -1267,20 +1292,10 @@ function renderRecentKeysTable(keys) {
         row.innerHTML = `
             <td class="key-cell">${key.key}</td>
             <td>${key.balance || "0.00"}</td>
+            <td>${new Date(key.added).toLocaleString()}</td>
             <td>${key.lastError ? '<span class="error-text">失败</span>' : 
                    (parseFloat(key.balance) <= 0 ? '<span class="warning-text">余额不足</span>' : 
                    '<span class="success-text">正常</span>')}</td>
-            <td>${new Date(key.added).toLocaleString()}</td>
-            <td>
-                <div class="actions">
-                    <button class="btn btn-sm btn-outline" onclick="checkKey('${key.key}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    </button>
-                    <button class="btn btn-sm btn-outline" onclick="copyKey('${key.key}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    </button>
-                </div>
-            </td>
         `;
         
         tableBody.appendChild(row);
@@ -1318,6 +1333,12 @@ function updateSelectionStatus() {
             selectAllCheckbox.checked = false;
             selectAllCheckbox.indeterminate = false;
         }
+    }
+    
+    // 更新导出按钮状态
+    const exportSelectedBtn = document.getElementById("export-selected-keys");
+    if (exportSelectedBtn) {
+        exportSelectedBtn.disabled = selectedKeys.size === 0;
     }
 }
 
