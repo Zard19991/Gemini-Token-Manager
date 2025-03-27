@@ -1,39 +1,32 @@
-# Dockerfile
+# Dockerfile - 针对低资源服务器优化
 FROM node:20-alpine
 
-# 安装pnpm - 确保安装成功
-RUN npm install -g pnpm && pnpm -v
+# 设置环境变量减少资源消耗
+ENV NODE_ENV=production
+# 限制npm并发数，减少内存使用
+ENV npm_config_jobs=1
 
 WORKDIR /app
 
 # 复制package文件
 COPY package.json ./
-
-# 尝试导入现有的package-lock.json（如果存在）
 COPY package-lock.json* ./
-RUN if [ -f package-lock.json ]; then pnpm import; fi
 
-# 使用pnpm安装依赖
-RUN pnpm install --prod
+# 优化npm安装参数，减少CPU和内存占用
+RUN npm install --omit=dev --legacy-peer-deps --no-audit --no-fund && \
+    # 清理npm缓存减少镜像大小
+    npm cache clean --force
 
 COPY . .
 
-# Create a data directory for persistence
+# 创建数据目录
 RUN mkdir -p /app/data && \
     chmod 777 /app/data
 
 EXPOSE 7001
 
-# 使用更可靠的方式创建启动脚本
-RUN printf '#!/bin/sh\nif [ ! -f /app/data/.initialized ] || [ "$FORCE_INIT" = "true" ]; then\n  echo "Running initialization script..."\n  node /app/init.js\n  touch /app/data/.initialized\nfi\n\n# 使用pnpm启动或fallback到npm\nif command -v pnpm > /dev/null; then\n  pnpm start\nelse\n  npm start\nfi\n' > /app/start.sh && \
-    chmod +x /app/start.sh && \
-    cat /app/start.sh
+# 创建简化的启动脚本
+RUN printf '#!/bin/sh\nif [ ! -f /app/data/.initialized ] || [ "$FORCE_INIT" = "true" ]; then\n  echo "Running initialization script..."\n  node /app/init.js\n  touch /app/data/.initialized\nfi\nnpm start\n' > /app/start.sh && \
+    chmod +x /app/start.sh
 
-# 确保package.json中有start脚本
-RUN if ! grep -q "\"start\"" package.json; then \
-    echo "ERROR: No start script found in package.json"; \
-    exit 1; \
-fi
-
-# 使用shell形式的CMD确保正确执行脚本
-CMD /bin/sh /app/start.sh
+CMD ["/app/start.sh"]
