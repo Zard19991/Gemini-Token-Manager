@@ -91,7 +91,12 @@ async function loadKeys(retryCount = 3, retryDelay = 1500) {
         }
 
         // 构建请求头，添加认证信息
-        const headers = {};
+        const headers = {
+            "Content-Type": "application/json"
+        };
+        
+        // 确保从 localStorage 获取最新的 token
+        authToken = localStorage.getItem("guestToken") || "";
         if (authToken) {
             headers["Authorization"] = `Bearer ${authToken}`;
         }
@@ -110,8 +115,25 @@ async function loadKeys(retryCount = 3, retryDelay = 1500) {
                 if (result.accessControl === "private") {
                     keysContainer.innerHTML =
                         '<div class="empty-state">此页面仅限管理员访问<br><a href="/admin" style="color: #3498db;">前往管理员登录</a></div>';
-                } else {
+                } else if (result.accessControl === "restricted") {
+                    // 显示访客认证弹窗
                     showAuthModal();
+                    // 显示需要认证的提示
+                    keysContainer.innerHTML = `
+              <div class="empty-state">
+                <p>需要访客密码才能查看内容</p>
+                <button id="show-auth-button" style="margin-top: 20px; background: #3498db; color: white; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; font-size: 14px; transition: all 0.3s ease;">
+                  点击认证
+                </button>
+              </div>
+            `;
+                    // 添加认证按钮点击事件
+                    setTimeout(() => {
+                        const authButton = document.getElementById("show-auth-button");
+                        if (authButton) {
+                            authButton.addEventListener("click", showAuthModal);
+                        }
+                    }, 0);
                 }
                 return;
             }
@@ -602,6 +624,7 @@ async function checkAccessControl() {
                         '<div class="empty-state">此页面仅限管理员访问<br><a href="/admin" style="color: #3498db;">前往管理员登录</a></div>';
                 } else if (accessControlMode === "restricted") {
                     // 部分开放，检查是否已有token
+                    authToken = localStorage.getItem("guestToken") || "";
                     if (authToken) {
                         // 尝试使用现有token加载
                         loadKeys();
@@ -662,6 +685,12 @@ async function verifyGuestPassword() {
     }
 
     try {
+        // 添加加载状态
+        const verifyBtn = document.getElementById("verify-guest-btn");
+        const originalBtnText = verifyBtn.textContent;
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = "验证中...";
+        
         const response = await fetch("/admin/api/verify-guest", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -674,7 +703,14 @@ async function verifyGuestPassword() {
             // 认证成功，保存token并加载密钥
             authToken = data.token;
             localStorage.setItem("guestToken", authToken);
+            // 显示一个成功消息
+            showToast("访客认证成功", false);
+            // 关闭弹窗
             document.getElementById("auth-modal").classList.remove("show");
+            // 重置输入和错误信息
+            passwordInput.value = "";
+            errorMsg.style.display = "none";
+            // 加载密钥数据
             loadKeys();
         } else {
             // 认证失败
@@ -682,9 +718,18 @@ async function verifyGuestPassword() {
             errorMsg.style.display = "block";
             passwordInput.focus();
         }
+        
+        // 恢复按钮状态
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = originalBtnText;
     } catch (error) {
         console.error("验证访客密码时出错:", error);
         errorMsg.textContent = "验证失败，请重试";
         errorMsg.style.display = "block";
+        
+        // 恢复按钮状态
+        const verifyBtn = document.getElementById("verify-guest-btn");
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "验证";
     }
 }

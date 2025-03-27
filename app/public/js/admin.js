@@ -1604,7 +1604,7 @@ async function saveSettings(event) {
     const adminPassword = document.getElementById("admin-password-input").value.trim();
     const pageSize = parseInt(document.getElementById("page-size-input").value) || 10;
     const accessControl = document.getElementById("access-control-select").value;
-    const guestPassword = document.getElementById("guest-password-input").value;
+    const guestPassword = document.getElementById("guest-password-input").value.trim();
 
     const config = {};
     if (apiKey) config.apiKey = apiKey;
@@ -1615,13 +1615,35 @@ async function saveSettings(event) {
     // 添加访问控制设置
     config.accessControl = accessControl;
 
-    // 只有在有值或模式为restricted时设置访客密码
+    // 处理访客密码
     if (accessControl === "restricted") {
-        // 如果密码字段非空，则更新密码
+        // 如果设置了新密码，则更新
         if (guestPassword) {
             config.guestPassword = guestPassword;
+            console.log("设置访客密码:", guestPassword);
+        } else {
+            // 获取现有密码
+            try {
+                const response = await fetch("/admin/api/config");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data && data.data.guest_password) {
+                        // 使用现有密码
+                        config.guestPassword = data.data.guest_password;
+                        console.log("使用现有访客密码");
+                    } else {
+                        // 设置默认密码
+                        config.guestPassword = "guest_password";
+                        console.log("无现有密码，设置默认密码");
+                    }
+                }
+            } catch (error) {
+                console.error("获取配置失败:", error);
+                // 设置默认密码
+                config.guestPassword = "guest_password";
+                console.log("获取配置出错，设置默认密码");
+            }
         }
-        // 否则保持原密码不变
     } else {
         // 其他模式下，显式设置为空字符串
         config.guestPassword = "";

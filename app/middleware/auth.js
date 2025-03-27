@@ -109,6 +109,9 @@ module.exports = () => {
     // Helper function to authenticate guest
     async function authenticateGuest(ctx) {
         const accessControl = await ctx.service.config.getValue("access_control", "open");
+        
+        // 添加日志以便调试
+        console.log("访问控制模式:", accessControl);
 
         // If fully open, allow access
         if (accessControl === "open") {
@@ -123,7 +126,10 @@ module.exports = () => {
         // Restricted mode, check guest password
         if (accessControl === "restricted") {
             const authHeader = ctx.get("Authorization");
+            console.log("Authorization头:", authHeader ? "存在" : "不存在");
+            
             if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                console.log("Authorization头格式不正确或不存在");
                 return false;
             }
 
@@ -132,11 +138,16 @@ module.exports = () => {
                 "guest_password",
                 "guest_password"
             );
-
-            return guestToken === guestPassword;
+            
+            // 不输出实际密码，但输出匹配结果
+            const matched = guestToken === guestPassword;
+            console.log("访客密码验证结果:", matched ? "通过" : "不通过");
+            
+            return matched;
         }
 
         // Default deny
+        console.log("默认拒绝访问，访问控制模式:", accessControl);
         return false;
     }
 };
