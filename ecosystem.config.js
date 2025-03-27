@@ -3,18 +3,16 @@ module.exports = {
     apps: [
         {
             name: "gemini-token-manager",
-            // 关键修改：调整脚本路径和启动命令方式
             script: "./node_modules/.bin/egg-scripts",
-            args: "start --title=gemini-token-manager",
-            instances: process.env.INSTANCES || "1", // 默认只启动一个实例
-            exec_mode: "cluster",
+            args: "start --title=gemini-token-manager --daemon=false --workers=1", // 修改这里
+            instances: 1, // 使用单实例模式更简单
+            exec_mode: "fork", // 改为 fork 模式
             max_memory_restart: process.env.MAX_MEMORY || "300M",
             env: {
                 NODE_ENV: "production",
             },
             env_docker: {
                 NODE_ENV: "production",
-                INSTANCES: "1", // 只启动一个实例避免资源消耗
                 MAX_MEMORY: "150M",
             },
             log_date_format: "YYYY-MM-DD HH:mm:ss",
