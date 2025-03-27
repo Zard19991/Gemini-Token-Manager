@@ -111,14 +111,14 @@ class ProxyService {
             this.ctx.logger.info(`请求已完成，状态码: ${response.status}`);
 
             // Read response as buffer to handle any content type
-            this.ctx.logger.info("开始读取响应体...");
-            const responseBuffer = await response.buffer();
-            this.ctx.logger.info(`响应体读取完成，大小: ${responseBuffer.length} 字节`);
+            // this.ctx.logger.info("开始读取响应体...");
+            // const responseBuffer = await response.buffer();
+            // this.ctx.logger.info(`响应体读取完成，大小: ${responseBuffer.length} 字节`);
             // 正确设置HTTP响应
-            this.ctx.status = result.status;
+            this.ctx.status = response.status;
 
             // 处理headers (避免设置可能导致问题的头部)
-            for (const [key, values] of Object.entries(result.headers)) {
+            for (const [key, values] of Object.entries(response.headers)) {
                 if (
                     !["connection", "transfer-encoding", "content-length"].includes(
                         key.toLowerCase()
@@ -128,7 +128,7 @@ class ProxyService {
                 }
             }
             // 设置响应体
-            this.ctx.body = result.body;
+            this.ctx.body = response.body;
             // return {
             //     status: response.status,
             //     headers: response.headers.raw(),
