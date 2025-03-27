@@ -25,4 +25,4 @@ RUN node ./app/init.js
 EXPOSE 7001
 
 # 使用简单的启动命令，确保无误
-CMD ["pm2-runtime", "ecosystem.config.js", "--env", "docker"]
+CMD ["sh", "-c", "node ./app/init.js && pm2-runtime ecosystem.config.js --env docker"]
