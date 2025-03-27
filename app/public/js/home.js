@@ -221,7 +221,6 @@ async function getPageSize(retryCount = 2) {
 
         // 尝试重试
         if (retryCount > 0) {
-            console.log(`尝试重新获取页面大小... 剩余尝试次数: ${retryCount}`);
             await new Promise(resolve => setTimeout(resolve, 1000)); // 延迟1秒
             return getPageSize(retryCount - 1);
         }
