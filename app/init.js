@@ -35,6 +35,7 @@ async function initialize() {
                 page_size: 12,
                 access_control: "open",
                 guest_password: "guest_password",
+                http_proxy: "",
             };
 
             await fs.writeFile(configFile, JSON.stringify(defaultConfig, null, 2), "utf8");

@@ -900,3 +900,114 @@ async function loadSettings(attempts = 3) {
         showToast(`加载设置失败: ${error.message}`, true);
     }
 }
+
+// 保存设置功能
+async function saveSettings(event) {
+    if (event) event.preventDefault();
+    
+    try {
+        // 获取所有输入值
+        const apiKey = document.getElementById("api-key-input").value.trim();
+        const adminUsername = document.getElementById("admin-username-input").value.trim();
+        const adminPassword = document.getElementById("admin-password-input").value.trim();
+        const pageSize = document.getElementById("page-size-input").value.trim();
+        const httpProxy = document.getElementById("http-proxy-input").value.trim();
+        const accessControl = document.getElementById("access-control-select").value;
+        const guestPassword = document.getElementById("guest-password-input").value.trim();
+        
+        // 验证表单
+        if (accessControl === "partial" && !guestPassword && !document.getElementById("guest-password-input").placeholder.includes("已设置")) {
+            showToast("请设置访客密码", true);
+            return;
+        }
+        
+        // 准备数据
+        const data = {
+            apiKey,
+            adminUsername,
+            pageSize: parseInt(pageSize) || 10,
+            httpProxy,
+            accessControl
+        };
+        
+        // 仅当有输入密码时才更新密码
+        if (adminPassword) {
+            data.adminPassword = adminPassword;
+        }
+        
+        // 仅当访问控制为部分开放并且输入了密码时更新访客密码
+        if (accessControl === "partial" && guestPassword) {
+            data.guestPassword = guestPassword;
+        }
+        
+        console.log("正在保存设置...", data);
+        
+        // 发送请求
+        const response = await fetch("/admin/api/config", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`保存设置失败: 状态码 ${response.status}`);
+        }
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast("设置保存成功");
+            
+            // 清空密码字段
+            document.getElementById("admin-password-input").value = "";
+            document.getElementById("guest-password-input").value = "";
+            
+            // 更新访客密码提示
+            if (accessControl === "partial" && guestPassword) {
+                document.getElementById("guest-password-input").placeholder = "已设置访客密码 (不显示)";
+            }
+        } else {
+            throw new Error(result.message || "保存设置失败");
+        }
+    } catch (error) {
+        console.error("保存设置时出错:", error);
+        showToast(`保存设置失败: ${error.message}`, true);
+    }
+}
+
+// 切换访客密码输入框显示/隐藏
+function toggleGuestPasswordField(accessControlValue) {
+    const guestPasswordGroup = document.getElementById("guest-password-group");
+    if (accessControlValue === "partial") {
+        guestPasswordGroup.style.display = "block";
+    } else {
+        guestPasswordGroup.style.display = "none";
+    }
+}
+
+// 更新分隔符显示
+function updateDelimiterDisplay() {
+    const delimiterSelect = document.getElementById("delimiter-select");
+    const customDelimiterInput = document.getElementById("custom-delimiter");
+    const delimiterDisplay = document.getElementById("delimiter-display");
+    
+    let delimiter = "";
+    
+    if (delimiterSelect.value === "custom") {
+        customDelimiterInput.style.display = "inline-block";
+        delimiter = customDelimiterInput.value || "";
+    } else {
+        customDelimiterInput.style.display = "none";
+        
+        switch (delimiterSelect.value) {
+            case "newline": delimiter = "换行"; break;
+            case "comma": delimiter = ","; break;
+            case "tab": delimiter = "Tab"; break;
+            case "space": delimiter = "空格"; break;
+            default: delimiter = "换行";
+        }
+    }
+    
+    delimiterDisplay.textContent = delimiter ? `分隔符: "${delimiter}"` : "请选择分隔符";
+}
