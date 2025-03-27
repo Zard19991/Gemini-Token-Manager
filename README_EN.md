@@ -89,6 +89,16 @@ npm run dev
 
 ## ⚙️ Configuration
 
+### PM2 Configuration
+
+The project uses PM2 for process management, configured in `ecosystem.config.js`. Main configuration items include:
+
+| Config Item | Description | Default Value |
+|-------------|-------------|---------------|
+| `instances` | Number of instances | `max` (Production) / `2` (Docker) |
+| `exec_mode` | Execution mode | `cluster` |
+| `max_memory_restart` | Memory limit | `300M` (Production) / `150M` (Docker) |
+
 ### Data Persistence
 
 Data files are stored by default in the `data` folder in the project root directory. This directory is automatically mapped to the `/app/data` directory in the Docker container.
@@ -103,6 +113,31 @@ The following environment variables can be configured by modifying the `docker-c
 | `FORCE_INIT` | Force data reinitialization | `false` |
 
 ## 🛠 Common Commands
+
+### PM2 Process Management
+
+```bash
+# Start service with PM2
+npm run pm2
+
+# Start service with PM2 in Docker environment
+npm run pm2:docker
+
+# Stop service
+npm run pm2:stop
+
+# Restart service
+npm run pm2:restart
+
+# Reload service
+npm run pm2:reload
+
+# Delete service
+npm run pm2:delete
+
+# View logs
+npm run pm2:logs
+```
 
 ### Service Management
 
@@ -144,9 +179,17 @@ FORCE_INIT=true docker compose up -d
 npm install
 ```
 
-2. Run the development server
+2. Choose one of the following methods to run the service:
+
 ```bash
+# Development mode
 npm run dev
+
+# Run with PM2 (Production environment)
+npm run pm2
+
+# Run with PM2 in Docker environment
+npm run pm2:docker
 ```
 
 ### Build for Production
@@ -166,9 +209,14 @@ npm run build
    - If the Docker service is running properly
 
 2. If data initialization fails:
-   - Check logs with `docker compose logs -f`
+   - Check logs with `docker compose logs -f` or `npm run pm2:logs`
    - Ensure the data directory is writable
    - Try using `FORCE_INIT=true` to reinitialize
+
+3. PM2-related issues:
+   - Check PM2 logs: `npm run pm2:logs`
+   - Memory limit restart: Check `max_memory_restart` configuration
+   - Cluster mode issues: Verify if `instances` configuration is appropriate
 
 </details>
 
