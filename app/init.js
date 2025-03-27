@@ -29,12 +29,12 @@ async function initialize() {
 
         if (!configExists) {
             const defaultConfig = {
-                api_key: "default-api-key",
-                admin_username: "default-admin-username",
-                admin_password: "default-admin-password",
+                api_key: "linuxdo",
+                admin_username: "linuxdo",
+                admin_password: "linuxdo",
                 page_size: 12,
                 access_control: "open",
-                guest_password: "guest_password",
+                guest_password: "linuxdo",
                 http_proxy: "",
             };
 
