@@ -24,7 +24,6 @@ module.exports = app => {
     router.post("/admin/api/update-key-balance", controller.admin.updateKeyBalance);
     router.post("/admin/api/update-keys-balance", controller.admin.updateKeysBalance);
     router.post("/admin/api/batch-update-keys", controller.admin.batchUpdateKeys);
-    router.post("/admin/api/check-key", controller.admin.checkKey);
     // API proxy routes
     router.all("/v1/*", controller.proxy.handleProxy);
     router.all("/v1beta/*", controller.proxy.handleProxy);

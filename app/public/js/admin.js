@@ -1501,7 +1501,7 @@ async function checkKeyWithRetry(key, maxRetries = 2) {
 // 检测单个密钥
 async function checkKey(key) {
     try {
-        const response = await fetch("/admin/api/check-key", {
+        const response = await fetch("/admin/api/update-key-balance", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
