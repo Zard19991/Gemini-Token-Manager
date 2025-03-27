@@ -805,7 +805,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     // 设置表单提交事件
-    const settingsForm = document.getElementById("admin-settings-form");
+    const settingsForm = document.getElementById("settings-form");
     if (settingsForm) {
         settingsForm.addEventListener("submit", function(event) {
             event.preventDefault();

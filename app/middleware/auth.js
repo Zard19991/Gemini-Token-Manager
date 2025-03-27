@@ -6,7 +6,11 @@ module.exports = () => {
         // Admin API routes need admin authentication
         if (path.startsWith("/admin/api/")) {
             // Special cases without auth
-            if (path === "/admin/api/pageSize" || path === "/admin/api/access-control") {
+            if (
+                path === "/admin/api/pageSize" ||
+                path === "/admin/api/access-control" ||
+                path === "/admin/api/verify-guest"
+            ) {
                 await next();
                 return;
             }
@@ -109,7 +113,7 @@ module.exports = () => {
     // Helper function to authenticate guest
     async function authenticateGuest(ctx) {
         const accessControl = await ctx.service.config.getValue("access_control", "open");
-        
+
         // 添加日志以便调试
         console.log("访问控制模式:", accessControl);
 
@@ -127,7 +131,7 @@ module.exports = () => {
         if (accessControl === "restricted") {
             const authHeader = ctx.get("Authorization");
             console.log("Authorization头:", authHeader ? "存在" : "不存在");
-            
+
             if (!authHeader || !authHeader.startsWith("Bearer ")) {
                 console.log("Authorization头格式不正确或不存在");
                 return false;
@@ -138,11 +142,11 @@ module.exports = () => {
                 "guest_password",
                 "guest_password"
             );
-            
+
             // 不输出实际密码，但输出匹配结果
             const matched = guestToken === guestPassword;
             console.log("访客密码验证结果:", matched ? "通过" : "不通过");
-            
+
             return matched;
         }
 
