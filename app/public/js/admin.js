@@ -1458,6 +1458,18 @@ function updateSelectionStatus() {
         exportSelectedBtn.disabled = selectedKeys.size === 0;
     }
     
+    // 更新检测和删除按钮状态
+    const checkSelectedBtn = document.getElementById("check-selected-keys");
+    const deleteSelectedBtn = document.getElementById("delete-selected-keys");
+    
+    if (checkSelectedBtn) {
+        checkSelectedBtn.disabled = selectedKeys.size === 0;
+    }
+    
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.disabled = selectedKeys.size === 0;
+    }
+    
     // 确保表头全选框状态与实际选择状态一致
     check_all_selected();
 }

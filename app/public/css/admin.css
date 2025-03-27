@@ -156,6 +156,25 @@ h1 {
     border: 1px solid #edf2f7;
 }
 
+/* 批量操作工具栏样式 */
+.batch-tools {
+    display: none;
+    background: #edf2f7;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-top: 10px;
+    border: 1px solid #dbe3ed;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(-10px);
+}
+
+.batch-tools.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .selection-count {
     font-size: 0.9rem;
     color: #495057;
