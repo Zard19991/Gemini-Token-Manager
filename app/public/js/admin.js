@@ -153,7 +153,10 @@ let balanceDistChart, keyStatusChart, balanceTrendChart;
 // 增强的仪表盘加载函数
 function loadDashboard() {
     // 检查是否在仪表盘页面
-    if (!document.getElementById("dashboard") || !document.getElementById("dashboard").classList.contains("active")) {
+    if (
+        !document.getElementById("dashboard") ||
+        !document.getElementById("dashboard").classList.contains("active")
+    ) {
         console.warn("当前不在仪表盘页面，跳过加载");
         return;
     }
@@ -618,7 +621,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
-    
+
     // 全局多选控件
     document.getElementById("select-all-keys").addEventListener("change", function () {
         const tableCheckbox = document.getElementById("select-all-table");
@@ -809,19 +812,19 @@ document.addEventListener("DOMContentLoaded", () => {
             toggleGuestPasswordField(this.value);
         });
     }
-    
+
     // 设置表单提交事件
     const settingsForm = document.getElementById("settings-form");
     if (settingsForm) {
-        settingsForm.addEventListener("submit", function(event) {
+        settingsForm.addEventListener("submit", function (event) {
             event.preventDefault();
             saveSettings(event);
         });
     }
-    
+
     // 初始加载
     loadDashboard();
-    
+
     // 如果在设置标签页，也加载设置
     const settingsTab = document.querySelector(".tab[data-tab='settings']");
     if (settingsTab && settingsTab.classList.contains("active")) {
@@ -848,11 +851,11 @@ async function loadSettings(attempts = 3) {
         console.log("成功获取响应，解析JSON...");
         const result = await response.json();
         console.log("解析的响应数据:", result);
-        
+
         if (result.success) {
             console.log("加载到的配置数据:", result.data);
             const config = result.data;
-            
+
             // 设置各个字段的值，增加错误处理
             const apiKeyInput = document.getElementById("api-key-input");
             const adminUsernameInput = document.getElementById("admin-username-input");
@@ -861,32 +864,34 @@ async function loadSettings(attempts = 3) {
             const httpProxyInput = document.getElementById("http-proxy-input");
             const accessControlSelect = document.getElementById("access-control-select");
             const guestPasswordInput = document.getElementById("guest-password-input");
-            
+
             console.log("正在设置表单字段值...");
             if (apiKeyInput) apiKeyInput.value = config.apiKey || "";
             if (adminUsernameInput) adminUsernameInput.value = config.adminUsername || "";
             if (adminPasswordInput) adminPasswordInput.value = ""; // 不预填密码
             if (pageSizeInput) pageSizeInput.value = config.pageSize || 10;
             if (httpProxyInput) httpProxyInput.value = config.httpProxy || "";
-            
+
             console.log("设置访问控制模式:", config.accessControl);
             // 设置访问控制选项
             if (accessControlSelect) {
                 accessControlSelect.value = config.accessControl || "open";
                 // 确保触发change事件
-                const event = new Event('change');
+                const event = new Event("change");
                 accessControlSelect.dispatchEvent(event);
             }
-            
+
             // 显示/隐藏访客密码输入框
             toggleGuestPasswordField(config.accessControl || "open");
 
             // 预填访客密码（如果存在）
             if (guestPasswordInput) {
                 guestPasswordInput.value = ""; // 出于安全考虑，不预填真实密码
-                guestPasswordInput.placeholder = config.guestPassword ? "已设置访客密码 (不显示)" : "设置访客密码";
+                guestPasswordInput.placeholder = config.guestPassword
+                    ? "已设置访客密码 (不显示)"
+                    : "设置访客密码";
             }
-            
+
             console.log("设置加载完成");
             showToast("设置加载成功");
         } else {
@@ -910,7 +915,7 @@ async function loadSettings(attempts = 3) {
 // 保存设置功能
 async function saveSettings(event) {
     if (event) event.preventDefault();
-    
+
     try {
         // 获取所有输入值
         const apiKey = document.getElementById("api-key-input").value.trim();
@@ -920,58 +925,63 @@ async function saveSettings(event) {
         const httpProxy = document.getElementById("http-proxy-input").value.trim();
         const accessControl = document.getElementById("access-control-select").value;
         const guestPassword = document.getElementById("guest-password-input").value.trim();
-        
+
         // 验证表单
-        if (accessControl === "partial" && !guestPassword && !document.getElementById("guest-password-input").placeholder.includes("已设置")) {
+        if (
+            accessControl === "partial" &&
+            !guestPassword &&
+            !document.getElementById("guest-password-input").placeholder.includes("已设置")
+        ) {
             showToast("请设置访客密码", true);
             return;
         }
-        
+
         // 准备数据
         const data = {
             apiKey,
             adminUsername,
             pageSize: parseInt(pageSize) || 10,
             httpProxy,
-            accessControl
+            accessControl,
         };
-        
+
         // 仅当有输入密码时才更新密码
         if (adminPassword) {
             data.adminPassword = adminPassword;
         }
-        
+
         // 仅当访问控制为部分开放并且输入了密码时更新访客密码
         if (accessControl === "partial" && guestPassword) {
             data.guestPassword = guestPassword;
         }
-        
+
         console.log("正在保存设置...", data);
-        
+
         // 发送请求
         const response = await fetch("/admin/api/update-config", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
         });
-        
+
         if (!response.ok) {
             throw new Error(`保存设置失败: 状态码 ${response.status}`);
         }
-        
+
         const result = await response.json();
         if (result.success) {
             showToast("设置保存成功");
-            
+
             // 清空密码字段
             document.getElementById("admin-password-input").value = "";
             document.getElementById("guest-password-input").value = "";
-            
+
             // 更新访客密码提示
             if (accessControl === "partial" && guestPassword) {
-                document.getElementById("guest-password-input").placeholder = "已设置访客密码 (不显示)";
+                document.getElementById("guest-password-input").placeholder =
+                    "已设置访客密码 (不显示)";
             }
         } else {
             throw new Error(result.message || "保存设置失败");
@@ -997,24 +1007,33 @@ function updateDelimiterDisplay() {
     const delimiterSelect = document.getElementById("delimiter-select");
     const customDelimiterInput = document.getElementById("custom-delimiter");
     const delimiterDisplay = document.getElementById("delimiter-display");
-    
+
     let delimiter = "";
-    
+
     if (delimiterSelect.value === "custom") {
         customDelimiterInput.style.display = "inline-block";
         delimiter = customDelimiterInput.value || "";
     } else {
         customDelimiterInput.style.display = "none";
-        
+
         switch (delimiterSelect.value) {
-            case "newline": delimiter = "换行"; break;
-            case "comma": delimiter = ","; break;
-            case "tab": delimiter = "Tab"; break;
-            case "space": delimiter = "空格"; break;
-            default: delimiter = "换行";
+            case "newline":
+                delimiter = "换行";
+                break;
+            case "comma":
+                delimiter = ",";
+                break;
+            case "tab":
+                delimiter = "Tab";
+                break;
+            case "space":
+                delimiter = "空格";
+                break;
+            default:
+                delimiter = "换行";
         }
     }
-    
+
     delimiterDisplay.textContent = delimiter ? `分隔符: "${delimiter}"` : "请选择分隔符";
 }
 
@@ -1025,42 +1044,45 @@ async function batchDeleteSelectedKeys() {
         return;
     }
 
-    confirmDialog(`确定要删除选中的 ${selectedKeys.size} 个密钥吗？此操作不可恢复。`, async (confirmed) => {
-        if (!confirmed) return;
+    confirmDialog(
+        `确定要删除选中的 ${selectedKeys.size} 个密钥吗？此操作不可恢复。`,
+        async confirmed => {
+            if (!confirmed) return;
 
-        try {
-            // 将 Set 转换为数组
-            const keysToDelete = Array.from(selectedKeys);
-            
-            const response = await fetch("/admin/api/delete-keys", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ keys: keysToDelete })
-            });
+            try {
+                // 将 Set 转换为数组
+                const keysToDelete = Array.from(selectedKeys);
 
-            if (!response.ok) {
-                throw new Error("删除密钥失败");
+                const response = await fetch("/admin/api/delete-keys", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ keys: keysToDelete }),
+                });
+
+                if (!response.ok) {
+                    throw new Error("删除密钥失败");
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    showToast(`成功删除 ${result.deleted} 个密钥`);
+                    // 清空选中的密钥
+                    selectedKeys.clear();
+                    // 重新加载密钥列表
+                    loadAllKeys();
+                    // 更新仪表盘
+                    loadDashboard();
+                } else {
+                    throw new Error(result.message || "删除密钥失败");
+                }
+            } catch (error) {
+                console.error("删除密钥时出错:", error);
+                showToast(`删除密钥失败: ${error.message}`, true);
             }
-
-            const result = await response.json();
-            if (result.success) {
-                showToast(`成功删除 ${result.deleted} 个密钥`);
-                // 清空选中的密钥
-                selectedKeys.clear();
-                // 重新加载密钥列表
-                loadAllKeys();
-                // 更新仪表盘
-                loadDashboard();
-            } else {
-                throw new Error(result.message || "删除密钥失败");
-            }
-        } catch (error) {
-            console.error("删除密钥时出错:", error);
-            showToast(`删除密钥失败: ${error.message}`, true);
         }
-    });
+    );
 }
 
 // 加载所有密钥到密钥管理页面
@@ -1068,31 +1090,31 @@ async function loadAllKeys(page = 1) {
     try {
         const keysPerPageElement = document.getElementById("keys-per-page");
         const keysPerPage = keysPerPageElement ? parseInt(keysPerPageElement.value) || 10 : 10;
-        
+
         const searchInputElement = document.getElementById("search-input");
         const searchQuery = searchInputElement ? searchInputElement.value.trim() : "";
-        
+
         // 构建查询参数
         const params = new URLSearchParams({
             page: page,
             limit: keysPerPage,
             sort: currentSortField,
-            order: currentSortOrder
+            order: currentSortOrder,
         });
-        
+
         // 如果有搜索查询，添加到参数中
         if (searchQuery) {
             params.append("search", searchQuery);
         }
-        
+
         const response = await fetch(`/admin/api/keys?${params.toString()}`);
-        
+
         if (!response.ok) {
             throw new Error("加载密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             renderKeysTable(result.data, result.total, page, keysPerPage);
             updateSelectionStatus();
@@ -1109,21 +1131,21 @@ async function loadAllKeys(page = 1) {
 function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
     const tableBody = document.getElementById("keys-table-body");
     const paginationContainer = document.getElementById("pagination-container");
-    
+
     // 清空表格
     tableBody.innerHTML = "";
-    
+
     if (keys.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="8" class="text-center">没有找到密钥</td></tr>';
         paginationContainer.innerHTML = "";
         return;
     }
-    
+
     // 填充表格数据
     keys.forEach((key, index) => {
         const row = document.createElement("tr");
         row.setAttribute("data-key", key.key);
-        
+
         // 确定行的状态类
         let rowClass = "";
         if (key.lastError) {
@@ -1131,33 +1153,37 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         } else if (parseFloat(key.balance) <= 0) {
             rowClass = "warning";
         }
-        
+
         if (rowClass) {
             row.classList.add(rowClass);
         }
-        
+
         // 如果密钥在选中集合中，设置选中状态
         const isSelected = selectedKeys.has(key.key);
         if (isSelected) {
             row.classList.add("selected");
         }
-        
+
         // 计算序号
         const itemNumber = (currentPage - 1) * keysPerPage + index + 1;
-        
+
         row.innerHTML = `
             <td>${itemNumber}</td>
             <td>
-                <input type="checkbox" class="key-checkbox" ${isSelected ? 'checked' : ''} 
+                <input type="checkbox" class="key-checkbox" ${isSelected ? "checked" : ""} 
                        onchange="toggleKeySelection('${key.key}', this.checked)">
             </td>
             <td class="key-cell">${key.key}</td>
             <td>${key.balance || "0.00"}</td>
-            <td>${key.lastUpdated ? new Date(key.lastUpdated).toLocaleString() : '从未'}</td>
+            <td>${key.lastUpdated ? new Date(key.lastUpdated).toLocaleString() : "从未"}</td>
             <td>${new Date(key.added).toLocaleString()}</td>
-            <td>${key.lastError ? '<span class="error-text">失败</span>' : 
-                   (parseFloat(key.balance) <= 0 ? '<span class="warning-text">余额不足</span>' : 
-                   '<span class="success-text">正常</span>')}</td>
+            <td>${
+                key.lastError
+                    ? '<span class="error-text">失败</span>'
+                    : parseFloat(key.balance) <= 0
+                    ? '<span class="warning-text">余额不足</span>'
+                    : '<span class="success-text">正常</span>'
+            }</td>
             <td>
                 <div class="actions">
                     <button class="btn btn-sm btn-outline" onclick="checkKey('${key.key}')">
@@ -1172,13 +1198,13 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
                 </div>
             </td>
         `;
-        
+
         tableBody.appendChild(row);
     });
-    
+
     // 创建分页
     renderPagination(totalKeys, currentPage, keysPerPage);
-    
+
     // 更新选择状态显示
     updateSelectionStatus();
 }
@@ -1187,43 +1213,47 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
 function renderPagination(totalItems, currentPage, itemsPerPage) {
     const paginationContainer = document.getElementById("pagination-container");
     paginationContainer.innerHTML = "";
-    
+
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-    
+
     if (totalPages <= 1) {
         return;
     }
-    
+
     const ul = document.createElement("ul");
     ul.className = "pagination";
-    
+
     // 上一页按钮
     const prevLi = document.createElement("li");
-    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" ${currentPage > 1 ? `onclick="loadAllKeys(${currentPage - 1})"` : ''}>上一页</a>`;
+    prevLi.className = `page-item ${currentPage === 1 ? "disabled" : ""}`;
+    prevLi.innerHTML = `<a class="page-link" ${
+        currentPage > 1 ? `onclick="loadAllKeys(${currentPage - 1})"` : ""
+    }>上一页</a>`;
     ul.appendChild(prevLi);
-    
+
     // 页码按钮
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + 4);
-    
+
     if (endPage - startPage < 4 && startPage > 1) {
         startPage = Math.max(1, endPage - 4);
     }
-    
+
     for (let i = startPage; i <= endPage; i++) {
         const pageLi = document.createElement("li");
-        pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageLi.className = `page-item ${i === currentPage ? "active" : ""}`;
         pageLi.innerHTML = `<a class="page-link" onclick="loadAllKeys(${i})">${i}</a>`;
         ul.appendChild(pageLi);
     }
-    
+
     // 下一页按钮
     const nextLi = document.createElement("li");
-    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" ${currentPage < totalPages ? `onclick="loadAllKeys(${currentPage + 1})"` : ''}>下一页</a>`;
+    nextLi.className = `page-item ${currentPage === totalPages ? "disabled" : ""}`;
+    nextLi.innerHTML = `<a class="page-link" ${
+        currentPage < totalPages ? `onclick="loadAllKeys(${currentPage + 1})"` : ""
+    }>下一页</a>`;
     ul.appendChild(nextLi);
-    
+
     paginationContainer.appendChild(ul);
 }
 
@@ -1235,15 +1265,15 @@ async function loadRecentKeys() {
             console.warn("未找到最近密钥表格元素，可能不在仪表盘页面");
             return;
         }
-        
+
         const response = await fetch("/admin/api/keys?limit=5&sort=added&order=desc");
-        
+
         if (!response.ok) {
             throw new Error("加载最近密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             renderRecentKeysTable(result.data);
         } else {
@@ -1258,25 +1288,25 @@ async function loadRecentKeys() {
 // 渲染最近添加的密钥表格
 function renderRecentKeysTable(keys) {
     const tableBody = document.getElementById("recent-keys-table-body");
-    
+
     // 检查表格主体元素是否存在
     if (!tableBody) {
         console.warn("未找到最近密钥表格主体元素");
         return;
     }
-    
+
     // 清空表格
     tableBody.innerHTML = "";
-    
+
     if (keys.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="4" class="text-center">没有找到密钥</td></tr>';
         return;
     }
-    
+
     // 填充表格数据
     keys.forEach(key => {
         const row = document.createElement("tr");
-        
+
         // 确定行的状态类
         let rowClass = "";
         if (key.lastError) {
@@ -1284,31 +1314,35 @@ function renderRecentKeysTable(keys) {
         } else if (parseFloat(key.balance) <= 0) {
             rowClass = "warning";
         }
-        
+
         if (rowClass) {
             row.classList.add(rowClass);
         }
-        
+
         row.innerHTML = `
             <td class="key-cell">${key.key}</td>
             <td>${key.balance || "0.00"}</td>
             <td>${new Date(key.added).toLocaleString()}</td>
-            <td>${key.lastError ? '<span class="error-text">失败</span>' : 
-                   (parseFloat(key.balance) <= 0 ? '<span class="warning-text">余额不足</span>' : 
-                   '<span class="success-text">正常</span>')}</td>
+            <td>${
+                key.lastError
+                    ? '<span class="error-text">失败</span>'
+                    : parseFloat(key.balance) <= 0
+                    ? '<span class="warning-text">余额不足</span>'
+                    : '<span class="success-text">正常</span>'
+            }</td>
         `;
-        
+
         tableBody.appendChild(row);
     });
 }
 
 // 更新选择状态显示
 function updateSelectionStatus() {
-    const selectedCount = document.getElementById("selected-count");
+    const selectedCount = document.getElementById("selection-count");
     if (selectedCount) {
-        selectedCount.textContent = selectedKeys.size;
+        selectedCount.textContent = `已选择 ${selectedKeys.size} 个 Key`;
     }
-    
+
     // 显示/隐藏批量操作工具栏
     const batchTools = document.getElementById("batch-tools");
     if (batchTools) {
@@ -1318,7 +1352,7 @@ function updateSelectionStatus() {
             batchTools.classList.remove("show");
         }
     }
-    
+
     // 更新全选复选框
     const selectAllCheckbox = document.getElementById("select-all-table");
     if (selectAllCheckbox) {
@@ -1334,7 +1368,7 @@ function updateSelectionStatus() {
             selectAllCheckbox.indeterminate = false;
         }
     }
-    
+
     // 更新导出按钮状态
     const exportSelectedBtn = document.getElementById("export-selected-keys");
     if (exportSelectedBtn) {
@@ -1349,7 +1383,7 @@ function toggleKeySelection(key, isSelected) {
     } else {
         selectedKeys.delete(key);
     }
-    
+
     // 更新表格行的选中状态
     const row = document.querySelector(`tr[data-key="${key}"]`);
     if (row) {
@@ -1359,7 +1393,7 @@ function toggleKeySelection(key, isSelected) {
             row.classList.remove("selected");
         }
     }
-    
+
     // 更新显示
     updateSelectionStatus();
 }
@@ -1370,95 +1404,98 @@ async function batchCheckSelectedKeys() {
         showToast("请选择要检测的密钥", true);
         return;
     }
-    
+
     // 重置停止标志
     isBatchProcessingStopped = false;
-    
+
     // 显示进度条
-    const progressContainer = document.getElementById("batch-progress-container");
-    const progressBar = document.getElementById("batch-progress");
-    const progressText = document.getElementById("batch-progress-text");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-fill");
+    const progressText = document.getElementById("progress-text");
     const cancelButton = document.getElementById("stop-batch-process");
-    
+
     if (progressContainer) progressContainer.style.display = "block";
     if (progressBar) progressBar.style.width = "0%";
     if (progressText) progressText.textContent = "0/" + selectedKeys.size;
     if (cancelButton) cancelButton.style.display = "inline-block";
-    
+
     // 获取并验证间隔设置
     const intervalType = document.getElementById("interval-type").value;
     let delay = 0;
-    
+
     try {
         // 根据间隔类型设置延迟
         if (intervalType === "fixed") {
             // 固定间隔
             const concurrency = parseInt(document.getElementById("concurrency").value) || 1;
             if (concurrency < 1) throw new Error("并发数必须大于0");
-            
+
             // 使用并发处理
             const keysArray = Array.from(selectedKeys);
             const results = [];
             let completed = 0;
-            
+
             // 分批处理
             for (let i = 0; i < keysArray.length; i += concurrency) {
                 if (isBatchProcessingStopped) {
                     showToast("批量检测已停止");
                     break;
                 }
-                
+
                 const batch = keysArray.slice(i, i + concurrency);
                 const batchPromises = batch.map(key => checkKeyWithRetry(key));
                 const batchResults = await Promise.allSettled(batchPromises);
-                
+
                 results.push(...batchResults);
                 completed += batch.length;
-                
+
                 // 更新进度
-                if (progressBar) progressBar.style.width = (completed / selectedKeys.size * 100) + "%";
+                if (progressBar)
+                    progressBar.style.width = (completed / selectedKeys.size) * 100 + "%";
                 if (progressText) progressText.textContent = completed + "/" + selectedKeys.size;
             }
-            
+
             // 处理结果
             handleBatchResults(results);
         } else {
             // 随机间隔
             const minInterval = parseInt(document.getElementById("min-interval").value) || 1000;
             const maxInterval = parseInt(document.getElementById("max-interval").value) || 3000;
-            
+
             if (minInterval < 0) throw new Error("最小间隔不能小于0");
             if (maxInterval < minInterval) throw new Error("最大间隔不能小于最小间隔");
-            
+
             // 依次处理每个密钥
             const keysArray = Array.from(selectedKeys);
             const results = [];
-            
+
             for (let i = 0; i < keysArray.length; i++) {
                 if (isBatchProcessingStopped) {
                     showToast("批量检测已停止");
                     break;
                 }
-                
+
                 const key = keysArray[i];
                 // 随机延迟
                 if (i > 0) {
-                    const randomDelay = Math.floor(Math.random() * (maxInterval - minInterval + 1)) + minInterval;
+                    const randomDelay =
+                        Math.floor(Math.random() * (maxInterval - minInterval + 1)) + minInterval;
                     await new Promise(resolve => setTimeout(resolve, randomDelay));
                 }
-                
+
                 try {
                     const result = await checkKeyWithRetry(key);
                     results.push({ status: "fulfilled", value: result });
                 } catch (error) {
                     results.push({ status: "rejected", reason: error });
                 }
-                
+
                 // 更新进度
-                if (progressBar) progressBar.style.width = ((i + 1) / selectedKeys.size * 100) + "%";
-                if (progressText) progressText.textContent = (i + 1) + "/" + selectedKeys.size;
+                if (progressBar)
+                    progressBar.style.width = ((i + 1) / selectedKeys.size) * 100 + "%";
+                if (progressText) progressText.textContent = i + 1 + "/" + selectedKeys.size;
             }
-            
+
             // 处理结果
             handleBatchResults(results);
         }
@@ -1475,9 +1512,9 @@ async function batchCheckSelectedKeys() {
 function handleBatchResults(results) {
     const successful = results.filter(r => r.status === "fulfilled").length;
     const failed = results.length - successful;
-    
+
     showToast(`批量检测完成。成功: ${successful}, 失败: ${failed}`);
-    
+
     // 重新加载数据
     loadAllKeys();
 }
@@ -1485,7 +1522,7 @@ function handleBatchResults(results) {
 // 带有重试的密钥检测
 async function checkKeyWithRetry(key, maxRetries = 2) {
     let retries = 0;
-    
+
     while (retries <= maxRetries) {
         try {
             return await checkKey(key);
@@ -1504,44 +1541,41 @@ async function checkKey(key) {
         const response = await fetch("/admin/api/update-key-balance", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ key })
+            body: JSON.stringify({ key }),
         });
-        
+
         if (!response.ok) {
             throw new Error("检测密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const row = document.querySelector(`tr[data-key="${key}"]`);
-            
+
             if (row) {
                 // 更新表格行
-                const balanceCell = row.querySelector("td:nth-child(3)");
-                const statusCell = row.querySelector("td:nth-child(4)");
-                const lastUpdatedCell = row.querySelector("td:nth-child(6)");
-                
+                const balanceCell = row.querySelector("td:nth-child(4)");
+                const statusCell = row.querySelector("td:nth-child(7)");
+                const lastUpdatedCell = row.querySelector("td:nth-child(5)");
+
                 if (balanceCell) balanceCell.textContent = result.balance || "0.00";
-                
+
                 if (statusCell) {
                     if (result.error) {
                         statusCell.innerHTML = '<span class="error-text">失败</span>';
                         row.className = "error";
-                    } else if (parseFloat(result.balance) <= 0) {
-                        statusCell.innerHTML = '<span class="warning-text">余额不足</span>';
-                        row.className = "warning";
                     } else {
                         statusCell.innerHTML = '<span class="success-text">正常</span>';
-                        row.className = "";
+                        row.className = parseFloat(result.balance) <= 0 ? "warning" : "";
                     }
                 }
-                
+
                 if (lastUpdatedCell) lastUpdatedCell.textContent = new Date().toLocaleString();
             }
-            
+
             showToast(`密钥检测完成: ${result.error ? "失败" : "成功"}`);
             return result;
         } else {
@@ -1564,15 +1598,15 @@ function stopBatchProcessing() {
 async function updateAllBalances() {
     try {
         const response = await fetch("/admin/api/update-all-balances", {
-            method: "POST"
+            method: "POST",
         });
-        
+
         if (!response.ok) {
             throw new Error("更新余额失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             showToast("已开始后台更新所有密钥余额，请稍后刷新页面查看结果");
         } else {
@@ -1588,31 +1622,31 @@ async function updateAllBalances() {
 async function addKey() {
     const input = document.getElementById("add-key-input");
     const key = input.value.trim();
-    
+
     if (!key) {
         showToast("请输入密钥", true);
         return;
     }
-    
+
     try {
         const response = await fetch("/admin/api/add-key", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ key })
+            body: JSON.stringify({ key }),
         });
-        
+
         if (!response.ok) {
             throw new Error("添加密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             showToast("密钥添加成功");
             input.value = ""; // 清空输入框
-            
+
             // 刷新数据
             loadAllKeys();
             loadDashboard();
@@ -1629,46 +1663,46 @@ async function addKey() {
 async function addBulkKeys() {
     const textarea = document.getElementById("bulk-keys-input");
     const text = textarea.value.trim();
-    
+
     if (!text) {
         showToast("请输入密钥", true);
         return;
     }
-    
+
     // 分割文本
     const keys = text
         .split(/[\n,;\s]+/) // 支持多种分隔符：换行、逗号、分号、空格
         .map(key => key.trim())
         .filter(key => key); // 过滤空值
-    
+
     if (keys.length === 0) {
         showToast("没有找到有效的密钥", true);
         return;
     }
-    
+
     try {
         const response = await fetch("/admin/api/add-keys-bulk", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ keys })
+            body: JSON.stringify({ keys }),
         });
-        
+
         if (!response.ok) {
             throw new Error("批量添加密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             showToast(`成功添加 ${result.added} 个密钥，已存在 ${result.existing} 个`);
             textarea.value = ""; // 清空输入框
-            
+
             // 关闭批量添加模态框
             const modal = document.getElementById("bulk-add-modal");
             if (modal) modal.classList.remove("show");
-            
+
             // 刷新数据
             loadAllKeys();
             loadDashboard();
@@ -1683,32 +1717,32 @@ async function addBulkKeys() {
 
 // 删除单个密钥
 async function deleteKey(key) {
-    confirmDialog(`确定要删除此密钥吗？此操作不可恢复。`, async (confirmed) => {
+    confirmDialog(`确定要删除此密钥吗？此操作不可恢复。`, async confirmed => {
         if (!confirmed) return;
-        
+
         try {
             const response = await fetch("/admin/api/delete-key", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ key })
+                body: JSON.stringify({ key }),
             });
-            
+
             if (!response.ok) {
                 throw new Error("删除密钥失败");
             }
-            
+
             const result = await response.json();
-            
+
             if (result.success) {
                 showToast("密钥删除成功");
-                
+
                 // 如果密钥在选中集合中，从中移除
                 if (selectedKeys.has(key)) {
                     selectedKeys.delete(key);
                 }
-                
+
                 // 刷新数据
                 loadAllKeys();
                 loadDashboard();
@@ -1734,16 +1768,16 @@ function copyKey(key) {
 async function copyAllKeys() {
     try {
         const response = await fetch("/admin/api/keys?limit=1000");
-        
+
         if (!response.ok) {
             throw new Error("获取密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const keys = result.data.map(k => k.key).join("\n");
-            
+
             navigator.clipboard
                 .writeText(keys)
                 .then(() => showToast(`已复制 ${result.data.length} 个密钥到剪贴板`))
@@ -1763,9 +1797,9 @@ function copySelectedKeys() {
         showToast("请选择要复制的密钥", true);
         return;
     }
-    
+
     const keys = Array.from(selectedKeys).join("\n");
-    
+
     navigator.clipboard
         .writeText(keys)
         .then(() => showToast(`已复制 ${selectedKeys.size} 个密钥到剪贴板`))
@@ -1778,81 +1812,84 @@ function exportSelectedKeys() {
         showToast("请选择要导出的密钥", true);
         return;
     }
-    
+
     const keys = Array.from(selectedKeys).join("\n");
     const blob = new Blob([keys], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `selected_keys_${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
-    
+
     URL.revokeObjectURL(url);
 }
 
 // 清除无效密钥
 async function clearInvalidKeys() {
-    confirmDialog("确定要删除所有无效密钥吗？包括余额为0和出错的密钥。此操作不可恢复。", async (confirmed) => {
-        if (!confirmed) return;
-        
-        try {
-            const response = await fetch("/admin/api/clear-invalid-keys", {
-                method: "POST"
-            });
-            
-            if (!response.ok) {
-                throw new Error("清除无效密钥失败");
+    confirmDialog(
+        "确定要删除所有无效密钥吗？包括余额为0和出错的密钥。此操作不可恢复。",
+        async confirmed => {
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch("/admin/api/clear-invalid-keys", {
+                    method: "POST",
+                });
+
+                if (!response.ok) {
+                    throw new Error("清除无效密钥失败");
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast(`成功删除 ${result.deleted} 个无效密钥`);
+
+                    // 清空选中的密钥
+                    selectedKeys.clear();
+
+                    // 刷新数据
+                    loadAllKeys();
+                    loadDashboard();
+                } else {
+                    throw new Error(result.message || "清除无效密钥失败");
+                }
+            } catch (error) {
+                console.error("清除无效密钥时出错:", error);
+                showToast(`清除无效密钥失败: ${error.message}`, true);
             }
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                showToast(`成功删除 ${result.deleted} 个无效密钥`);
-                
-                // 清空选中的密钥
-                selectedKeys.clear();
-                
-                // 刷新数据
-                loadAllKeys();
-                loadDashboard();
-            } else {
-                throw new Error(result.message || "清除无效密钥失败");
-            }
-        } catch (error) {
-            console.error("清除无效密钥时出错:", error);
-            showToast(`清除无效密钥失败: ${error.message}`, true);
         }
-    });
+    );
 }
 
 // 导出有效密钥
 async function exportValidKeys() {
     try {
         const response = await fetch("/admin/api/keys?filter=valid");
-        
+
         if (!response.ok) {
             throw new Error("获取有效密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const keys = result.data.map(k => k.key).join("\n");
-            
+
             if (keys.length === 0) {
                 showToast("没有找到有效密钥", true);
                 return;
             }
-            
+
             const blob = new Blob([keys], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement("a");
             a.href = url;
             a.download = `valid_keys_${new Date().toISOString().slice(0, 10)}.txt`;
             a.click();
-            
+
             URL.revokeObjectURL(url);
         } else {
             throw new Error(result.message || "获取有效密钥失败");
@@ -1873,15 +1910,15 @@ function showBalanceFilterModal() {
         placeholder: "例如：10",
         value: "10",
         confirmText: "导出",
-        callback: (value) => {
+        callback: value => {
             const minBalance = parseFloat(value);
             if (isNaN(minBalance) || minBalance < 0) {
                 showToast("请输入有效的余额值", true);
                 return;
             }
-            
+
             exportKeysWithMinBalance(minBalance);
-        }
+        },
     });
 }
 
@@ -1889,31 +1926,33 @@ function showBalanceFilterModal() {
 async function exportKeysWithMinBalance(minBalance) {
     try {
         const response = await fetch(`/admin/api/keys?filter=min_balance&value=${minBalance}`);
-        
+
         if (!response.ok) {
             throw new Error("获取高余额密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const keys = result.data.map(k => k.key).join("\n");
-            
+
             if (keys.length === 0) {
                 showToast(`没有找到余额 >= ${minBalance} 的密钥`, true);
                 return;
             }
-            
+
             const blob = new Blob([keys], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement("a");
             a.href = url;
-            a.download = `keys_min_balance_${minBalance}_${new Date().toISOString().slice(0, 10)}.txt`;
+            a.download = `keys_min_balance_${minBalance}_${new Date()
+                .toISOString()
+                .slice(0, 10)}.txt`;
             a.click();
-            
+
             URL.revokeObjectURL(url);
-            
+
             showToast(`已导出 ${result.data.length} 个余额 >= ${minBalance} 的密钥`);
         } else {
             throw new Error(result.message || "获取高余额密钥失败");
@@ -1927,44 +1966,46 @@ async function exportKeysWithMinBalance(minBalance) {
 // 导出过滤后的密钥
 function exportFilteredKeys() {
     const searchQuery = document.getElementById("search-input").value.trim();
-    
+
     if (!searchQuery) {
         showToast("请先输入搜索条件", true);
         return;
     }
-    
+
     exportKeysWithFilter(searchQuery);
 }
 
 // 导出带过滤条件的密钥
 async function exportKeysWithFilter(filter) {
     try {
-        const response = await fetch(`/admin/api/keys?search=${encodeURIComponent(filter)}&limit=1000`);
-        
+        const response = await fetch(
+            `/admin/api/keys?search=${encodeURIComponent(filter)}&limit=1000`
+        );
+
         if (!response.ok) {
             throw new Error("获取过滤密钥失败");
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             const keys = result.data.map(k => k.key).join("\n");
-            
+
             if (keys.length === 0) {
                 showToast("没有找到匹配的密钥", true);
                 return;
             }
-            
+
             const blob = new Blob([keys], { type: "text/plain" });
             const url = URL.createObjectURL(blob);
-            
+
             const a = document.createElement("a");
             a.href = url;
             a.download = `filtered_keys_${new Date().toISOString().slice(0, 10)}.txt`;
             a.click();
-            
+
             URL.revokeObjectURL(url);
-            
+
             showToast(`已导出 ${result.data.length} 个匹配的密钥`);
         } else {
             throw new Error(result.message || "获取过滤密钥失败");
@@ -1979,33 +2020,33 @@ async function exportKeysWithFilter(filter) {
 function enhanceBatchConfigPanelVisibility() {
     const configButton = document.getElementById("toggle-batch-config");
     const configPanel = document.getElementById("batch-config-panel");
-    
+
     if (!configButton || !configPanel) return;
-    
+
     // 如果用户曾经展开过配置面板，记住这个状态
     const wasExpanded = localStorage.getItem("batch_config_expanded") === "true";
-    
+
     if (wasExpanded) {
         configPanel.classList.add("show");
         configButton.classList.add("active");
-        
+
         // 更新按钮文本和图标
         const btnText = configButton.querySelector("span");
         const btnIcon = configButton.querySelector("svg");
-        
+
         if (btnText) btnText.textContent = "点击收起";
         if (btnIcon) btnIcon.style.transform = "rotate(180deg)";
     }
-    
+
     // 监听配置面板的展开/折叠状态变化
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
             if (mutation.attributeName === "class") {
                 const isExpanded = configPanel.classList.contains("show");
                 localStorage.setItem("batch_config_expanded", isExpanded);
             }
         });
     });
-    
+
     observer.observe(configPanel, { attributes: true });
 }
