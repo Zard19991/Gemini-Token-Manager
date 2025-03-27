@@ -584,6 +584,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    document.getElementById("select-all-table").addEventListener("change", function () {
+        const isChecked = this.checked;
+        const allCheckboxes = document.querySelectorAll(".key-checkbox");
+
+        // 更新所有表体中的复选框状态
+        allCheckboxes.forEach(checkbox => {
+            // 只有当状态不一致时才更新，避免不必要的事件触发
+            if (checkbox.checked !== isChecked) {
+                checkbox.checked = isChecked;
+                
+                // 调用toggleKeySelection函数更新数据
+                const keyValue = checkbox.closest("tr").getAttribute("data-key");
+                toggleKeySelection(keyValue, isChecked);
+            }
+        });
+    });
+
     // 初始化图表周期选择器
     const periodSelector = document.getElementById("chart-period");
     if (periodSelector) {
@@ -822,6 +839,35 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // 全选/取消全选表格中的所有密钥
+    const selectAllTableCheckbox = document.getElementById("select-all-table");
+    if (selectAllTableCheckbox) {
+        selectAllTableCheckbox.addEventListener("change", function () {
+            const checkboxes = document.querySelectorAll(".key-checkbox");
+            if (checkboxes.length === 0) {
+                return; // 如果没有复选框则不操作
+            }
+            
+            checkboxes.forEach(checkbox => {
+                // 只有当状态不一致时才更新，避免不必要的事件触发
+                if (checkbox.checked !== this.checked) {
+                    checkbox.checked = this.checked;
+                    
+                    // 调用toggleKeySelection函数更新数据
+                    const keyValue = checkbox.closest("tr").getAttribute("data-key");
+                    toggleKeySelection(keyValue, this.checked);
+                }
+            });
+            
+            // 显示通知
+            if (this.checked) {
+                showToast(`已选中全部 ${checkboxes.length} 个密钥`);
+            } else {
+                showToast("已取消全部选择");
+            }
+        });
+    }
+
     // 初始加载
     loadDashboard();
 
@@ -829,6 +875,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const settingsTab = document.querySelector(".tab[data-tab='settings']");
     if (settingsTab && settingsTab.classList.contains("active")) {
         loadSettings();
+    }
+
+    // 监听每页显示数量变更
+    const keysPerPageSelect = document.getElementById("keys-per-page");
+    if (keysPerPageSelect) {
+        keysPerPageSelect.addEventListener("change", function() {
+            loadAllKeys(1); // 切换每页显示数量时，重置到第一页
+        });
+    }
+    
+    // 监听搜索输入框
+    const searchInput = document.getElementById("search-input");
+    if (searchInput) {
+        searchInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") {
+                loadAllKeys(1); // 搜索时重置到第一页
+            }
+        });
     }
 });
 
@@ -995,7 +1059,7 @@ async function saveSettings(event) {
 // 切换访客密码输入框显示/隐藏
 function toggleGuestPasswordField(accessControlValue) {
     const guestPasswordGroup = document.getElementById("guest-password-group");
-    if (accessControlValue === "partial") {
+    if (accessControlValue === "restricted") {
         guestPasswordGroup.style.display = "block";
     } else {
         guestPasswordGroup.style.display = "none";
@@ -1170,8 +1234,7 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
         row.innerHTML = `
             <td>${itemNumber}</td>
             <td>
-                <input type="checkbox" class="key-checkbox" ${isSelected ? "checked" : ""} 
-                       onchange="toggleKeySelection('${key.key}', this.checked)">
+                <input type="checkbox" class="key-checkbox" ${isSelected ? "checked" : ""}>
             </td>
             <td class="key-cell">${key.key}</td>
             <td>${key.balance || "0.00"}</td>
@@ -1186,18 +1249,51 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
             }</td>
             <td>
                 <div class="actions">
-                    <button class="btn btn-sm btn-outline" onclick="checkKey('${key.key}')">
+                    <button class="btn btn-sm btn-outline check-key-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                     </button>
-                    <button class="btn btn-sm btn-outline" onclick="copyKey('${key.key}')">
+                    <button class="btn btn-sm btn-outline copy-key-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
-                    <button class="btn btn-sm btn-outline danger" onclick="deleteKey('${key.key}')">
+                    <button class="btn btn-sm btn-outline danger delete-key-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
             </td>
         `;
+
+        // 添加事件监听器
+        // 1. 复选框事件
+        const checkbox = row.querySelector(".key-checkbox");
+        if (checkbox) {
+            checkbox.addEventListener("change", function() {
+                toggleKeySelection(key.key, this.checked);
+            });
+        }
+
+        // 2. 检测按钮事件
+        const checkBtn = row.querySelector(".check-key-btn");
+        if (checkBtn) {
+            checkBtn.addEventListener("click", function() {
+                checkKey(key.key);
+            });
+        }
+
+        // 3. 复制按钮事件
+        const copyBtn = row.querySelector(".copy-key-btn");
+        if (copyBtn) {
+            copyBtn.addEventListener("click", function() {
+                copyKey(key.key);
+            });
+        }
+
+        // 4. 删除按钮事件
+        const deleteBtn = row.querySelector(".delete-key-btn");
+        if (deleteBtn) {
+            deleteBtn.addEventListener("click", function() {
+                deleteKey(key.key);
+            });
+        }
 
         tableBody.appendChild(row);
     });
@@ -1207,6 +1303,9 @@ function renderKeysTable(keys, totalKeys, currentPage, keysPerPage) {
 
     // 更新选择状态显示
     updateSelectionStatus();
+    
+    // 检查并同步全选框状态
+    check_all_selected();
 }
 
 // 创建分页控件
@@ -1353,26 +1452,34 @@ function updateSelectionStatus() {
         }
     }
 
-    // 更新全选复选框
-    const selectAllCheckbox = document.getElementById("select-all-table");
-    if (selectAllCheckbox) {
-        const allCheckboxes = document.querySelectorAll(".key-checkbox");
-        if (allCheckboxes.length > 0 && selectedKeys.size === allCheckboxes.length) {
-            selectAllCheckbox.checked = true;
-            selectAllCheckbox.indeterminate = false;
-        } else if (selectedKeys.size > 0) {
-            selectAllCheckbox.checked = false;
-            selectAllCheckbox.indeterminate = true;
-        } else {
-            selectAllCheckbox.checked = false;
-            selectAllCheckbox.indeterminate = false;
-        }
-    }
-
     // 更新导出按钮状态
     const exportSelectedBtn = document.getElementById("export-selected-keys");
     if (exportSelectedBtn) {
         exportSelectedBtn.disabled = selectedKeys.size === 0;
+    }
+    
+    // 确保表头全选框状态与实际选择状态一致
+    check_all_selected();
+}
+
+// 检查是否所有行都被选中，并更新表头全选框状态
+function check_all_selected() {
+    const selectAllTableCheckbox = document.getElementById("select-all-table");
+    if (selectAllTableCheckbox) {
+        const checkboxes = document.querySelectorAll(".key-checkbox");
+        
+        // 如果没有复选框或表格为空，则取消选中表头复选框
+        if (checkboxes.length === 0) {
+            selectAllTableCheckbox.checked = false;
+            return;
+        }
+        
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        // 避免不必要的状态变更，仅当状态不一致时才更新
+        if (selectAllTableCheckbox.checked !== allChecked) {
+            selectAllTableCheckbox.checked = allChecked;
+        }
     }
 }
 
@@ -1396,6 +1503,9 @@ function toggleKeySelection(key, isSelected) {
 
     // 更新显示
     updateSelectionStatus();
+    
+    // 检查是否所有行都被选中，并更新表头全选框状态
+    check_all_selected();
 }
 
 // 批量检测选中的密钥
@@ -1597,7 +1707,7 @@ function stopBatchProcessing() {
 // 更新所有密钥余额
 async function updateAllBalances() {
     try {
-        const response = await fetch("/admin/api/update-all-balances", {
+        const response = await fetch("/admin/api/update-keys-balance", {
             method: "POST",
         });
 
