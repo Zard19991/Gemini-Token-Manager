@@ -3,12 +3,12 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# 分开复制以处理package-lock.json可能不存在的情况
+# 复制package文件
 COPY package.json ./
-# 如果有package-lock.json则复制，没有则忽略
 COPY package-lock.json* ./
 
-RUN npm install --production
+# 使用--omit=dev替代--production并添加--legacy-peer-deps解决依赖冲突
+RUN npm install --omit=dev --legacy-peer-deps
 
 COPY . .
 
