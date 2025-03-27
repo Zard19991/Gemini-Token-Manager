@@ -1,9 +1,12 @@
 # Dockerfile
-FROM node:16-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+# 分开复制以处理package-lock.json可能不存在的情况
+COPY package.json ./
+# 如果有package-lock.json则复制，没有则忽略
+COPY package-lock.json* ./
 
 RUN npm install --production
 
