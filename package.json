@@ -1,0 +1,36 @@
+{
+    "name": "gemini-token-manager",
+    "version": "1.0.0",
+    "description": "Gemini Token Management System",
+    "private": true,
+    "dependencies": {
+        "egg": "^2.33.1",
+        "egg-scripts": "^2.15.2",
+        "egg-static": "^2.3.1",
+        "egg-validate": "^2.0.2",
+        "egg-view-nunjucks": "^2.3.0",
+        "escape-html": "^1.0.3",
+        "helmet": "^8.1.0",
+        "node-fetch": "^2.6.7",
+        "validator": "^13.15.0",
+        "xss": "^1.0.15"
+    },
+    "devDependencies": {
+        "egg-bin": "^4.16.4",
+        "egg-mock": "^5.1.0",
+        "eslint": "^8.9.0",
+        "eslint-config-egg": "^11.0.1"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "scripts": {
+        "start": "egg-scripts start --daemon --title=gemini-token-manager",
+        "stop": "egg-scripts stop --title=gemini-token-manager",
+        "dev": "egg-bin dev",
+        "debug": "egg-bin debug",
+        "test": "npm run lint -- --fix && npm run test-local",
+        "test-local": "egg-bin test",
+        "lint": "eslint ."
+    }
+}

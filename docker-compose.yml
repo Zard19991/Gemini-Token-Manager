@@ -1,0 +1,12 @@
+# docker-compose.yml
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - "7001:7001"
+    volumes:
+      - ./data:/app/data
+    restart: always
+    environment:
+      - NODE_ENV=production

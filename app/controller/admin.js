@@ -1,0 +1,231 @@
+"use strict";
+
+const { Controller } = require("egg");
+
+class AdminController extends Controller {
+    async index() {
+        const { ctx } = this;
+        await ctx.render("admin.html");
+    }
+
+    async getConfig() {
+        const { ctx } = this;
+        const config = await ctx.service.config.getConfig();
+        ctx.body = {
+            success: true,
+            data: config,
+        };
+    }
+
+    async updateConfig() {
+        const { ctx } = this;
+        const data = ctx.request.body;
+        const result = await ctx.service.config.updateConfig(data);
+        ctx.body = {
+            success: true,
+            data: result,
+        };
+    }
+
+    async addKey() {
+        const { ctx } = this;
+        const { key, balance = 0 } = ctx.request.body;
+
+        if (!key) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "Key is required",
+            };
+            return;
+        }
+
+        await ctx.service.key.addKey(key, balance);
+        ctx.body = { success: true };
+    }
+
+    async addKeysBulk() {
+        const { ctx } = this;
+        const { keys } = ctx.request.body;
+
+        if (!keys) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "Keys are required",
+            };
+            return;
+        }
+
+        const keyList = keys
+            .split("\n")
+            .map(k => k.trim())
+            .filter(k => k);
+
+        const addedKeys = await ctx.service.key.addKeys(keyList, 0);
+
+        ctx.body = {
+            success: true,
+            count: addedKeys.length,
+            addedKeys,
+            autoCheck: true,
+        };
+    }
+
+    async deleteKey() {
+        const { ctx } = this;
+        const { key } = ctx.request.body;
+
+        if (!key) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "Key is required",
+            };
+            return;
+        }
+
+        await ctx.service.key.deleteKey(key);
+        ctx.body = { success: true };
+    }
+
+    async updateKeyBalance() {
+        const { ctx } = this;
+        const { key } = ctx.request.body;
+
+        if (!key) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "密钥不能为空",
+            };
+            return;
+        }
+
+        const result = await ctx.service.proxy.checkKeyValidity(key);
+        const now = new Date().toISOString();
+
+        await ctx.service.key.updateKeyBalance(
+            key,
+            result.balance,
+            result.isValid ? null : result.message
+        );
+
+        ctx.body = {
+            success: result.isValid,
+            balance: result.balance,
+            message: result.message,
+            key,
+            isValid: result.isValid,
+            lastUpdated: now,
+        };
+    }
+
+    async updateKeysBalance() {
+        const { ctx } = this;
+        const { keys } = ctx.request.body;
+
+        if (!keys || !Array.isArray(keys) || keys.length === 0) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "请提供要检测的密钥列表",
+            };
+            return;
+        }
+
+        const now = new Date().toISOString();
+        const results = [];
+
+        for (const key of keys) {
+            try {
+                const result = await ctx.service.proxy.checkKeyValidity(key);
+                await ctx.service.key.updateKeyBalance(
+                    key,
+                    result.balance,
+                    result.isValid ? null : result.message
+                );
+
+                results.push({
+                    key,
+                    success: true,
+                    isValid: result.isValid,
+                    balance: result.balance,
+                    lastUpdated: now,
+                    message: result.message,
+                });
+            } catch (error) {
+                results.push({
+                    key,
+                    success: false,
+                    isValid: false,
+                    balance: 0,
+                    lastUpdated: now,
+                    message: `检测失败: ${error.message || "未知错误"}`,
+                });
+            }
+        }
+
+        ctx.body = {
+            success: true,
+            results,
+            count: results.length,
+            validCount: results.filter(r => r.isValid).length,
+        };
+    }
+
+    async batchUpdateKeys() {
+        const { ctx } = this;
+        const { results } = ctx.request.body;
+
+        if (!results || !Array.isArray(results) || results.length === 0) {
+            ctx.status = 400;
+            ctx.body = {
+                success: false,
+                message: "请提供要更新的密钥结果列表",
+            };
+            return;
+        }
+
+        const now = new Date().toISOString();
+        const updateResults = [];
+
+        for (const result of results) {
+            try {
+                if (!result.key) {
+                    updateResults.push({
+                        success: false,
+                        message: "密钥不能为空",
+                    });
+                    continue;
+                }
+
+                await ctx.service.key.updateKeyBalance(result.key, result.balance || 0);
+
+                updateResults.push({
+                    key: result.key,
+                    success: true,
+                    updated: now,
+                });
+            } catch (error) {
+                updateResults.push({
+                    key: result.key || "未知密钥",
+                    success: false,
+                    message: `处理更新失败: ${error.message || "未知错误"}`,
+                });
+            }
+        }
+
+        const successCount = updateResults.filter(r => r.success).length;
+
+        ctx.body = {
+            success: true,
+            updated: successCount,
+            failed: updateResults.length - successCount,
+            total: updateResults.length,
+            results: updateResults,
+        };
+    }
+}
+
+module.exports = AdminController;
