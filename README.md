@@ -2,6 +2,8 @@
 
 <div align="center">
 
+<img src="logo.svg" alt="Gemini Token Manager Logo" width="180" height="180" />
+
 ![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Docker](https://img.shields.io/badge/docker-支持-brightgreen)

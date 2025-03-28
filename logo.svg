@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆 -->
+  <circle cx="100" cy="100" r="90" fill="#4285F4" opacity="0.1"/>
+  
+  <!-- 外环 -->
+  <circle cx="100" cy="100" r="80" stroke="#4285F4" stroke-width="4" fill="none"/>
+  
+  <!-- 内环装饰 - 代表代理服务和负载均衡 -->
+  <path d="M100 28C130.376 28 156.772 45.1175 170 70" stroke="#34A853" stroke-width="4" stroke-linecap="round"/>
+  <path d="M100 28C69.6243 28 43.2282 45.1175 30 70" stroke="#FBBC05" stroke-width="4" stroke-linecap="round"/>
+  <path d="M30 130C43.2282 154.883 69.6243 172 100 172" stroke="#EA4335" stroke-width="4" stroke-linecap="round"/>
+  <path d="M170 130C156.772 154.883 130.376 172 100 172" stroke="#4285F4" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- 中心Gemini符号 -->
+  <path d="M70 100C70 82.3269 84.3269 68 102 68C119.673 68 134 82.3269 134 100C134 117.673 119.673 132 102 132" stroke="#4285F4" stroke-width="4" stroke-linecap="round"/>
+  <path d="M102 132C84.3269 132 70 117.673 70 100C70 82.3269 84.3269 68 102 68" stroke="#34A853" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- 代表令牌的元素 -->
+  <circle cx="102" cy="85" r="6" fill="#FBBC05"/>
+  <circle cx="102" cy="115" r="6" fill="#EA4335"/>
+  
+  <!-- 连接线 - 代表管理功能 -->
+  <line x1="70" y1="100" x2="50" y2="100" stroke="#4285F4" stroke-width="3" stroke-linecap="round"/>
+  <line x1="134" y1="100" x2="154" y2="100" stroke="#34A853" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- 代表数据节点的小圆点 -->
+  <circle cx="45" cy="100" r="5" fill="#4285F4"/>
+  <circle cx="159" cy="100" r="5" fill="#34A853"/>
+</svg> 
