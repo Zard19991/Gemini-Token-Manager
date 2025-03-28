@@ -41,3 +41,5 @@ coverage/
 .tmp/
 .temp/
 run/*
+pnpm-lock.yaml
+npm-lock.yaml
