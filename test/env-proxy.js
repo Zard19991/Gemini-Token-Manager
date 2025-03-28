@@ -14,7 +14,7 @@ async function main() {
         
         console.log("创建GoogleGenAI实例...");
         const genai = new GoogleGenAI({
-            apiKey: "AIzaSyA9riUZ1l5JzbBHO3Wuj5-KPlHX78FgfL8"
+            apiKey: "xxxx-KPlHX78FgfL8"
         });
 
         console.log("获取模型...");
