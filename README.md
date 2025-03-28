@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Docker](https://img.shields.io/badge/docker-支持-brightgreen)
 ![NodeJS](https://img.shields.io/badge/nodejs-16%2B-orange)
@@ -34,7 +34,16 @@
 -   🐳 Docker 容器化部署
 -   🔌 RESTful API 接口
 -   ⚙️ 支持环境变量配置
--   🔑 批量密钥管理功能（新增）
+-   🚀 增强的代理功能（新增）
+    - 支持 Google GenAI API 代理
+    - 支持 OpenAI API 代理
+    - 支持流式响应 (SSE) 处理
+    - 详细请求和响应日志记录
+-   🔍 环境代理测试工具（新增）
+    - 自动测试代理服务连接性
+    - 支持 Google GenAI 和 OpenAI API 调用测试
+    - 提供详细错误诊断
+-   🔑 批量密钥管理功能
     - 支持批量添加、删除、检测密钥
     - 支持导出选中密钥
     - 智能检测无效密钥
@@ -47,6 +56,7 @@
     - 增强的错误处理机制
 -   📝 丰富的示例代码
     - Python 调用示例
+    - 支持 Google GenAI 和 OpenAI API 的代码示例
     - 一键复制功能
 
 ## 📌 系统要求
@@ -237,7 +247,8 @@ npm run build
     - 检查 PM2 日志：`npm run pm2:logs`
     - 内存超限重启：检查 `max_memory_restart` 配置
     - 集群模式问题：确认 `instances` 配置是否合适
-
+4. 默认账号与密码
+    - 默认账号密码在项目目录 `/data/config.json` 中
 </details>
 
 ## 🤝 贡献指南

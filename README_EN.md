@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Docker](https://img.shields.io/badge/docker-supported-brightgreen)
 ![NodeJS](https://img.shields.io/badge/nodejs-16%2B-orange)
@@ -34,7 +34,16 @@ English | [简体中文](./README.md)
 -   🐳 Docker containerized deployment
 -   🔌 RESTful API interface
 -   ⚙️ Environment variable configuration
--   🔑 Batch Key Management (New)
+-   🚀 Enhanced Proxy Features (New)
+    - Support for Google GenAI API proxy
+    - Support for OpenAI API proxy
+    - Stream response (SSE) handling
+    - Detailed request and response logging
+-   🔍 Environment Proxy Testing Tool (New)
+    - Automatic proxy service connectivity testing
+    - Support for Google GenAI and OpenAI API call testing
+    - Detailed error diagnostics
+-   🔑 Batch Key Management
     - Support batch add, delete, and check keys
     - Support exporting selected keys
     - Smart invalid key detection
@@ -47,6 +56,7 @@ English | [简体中文](./README.md)
     - Enhanced error handling
 -   📝 Rich Example Code
     - Python usage examples
+    - Code examples for both Google GenAI and OpenAI API
     - One-click copy functionality
 
 ## 📌 Requirements
@@ -211,23 +221,66 @@ npm run pm2
 npm run pm2:docker
 ```
 
-## 🔧 Troubleshooting
+### Build for Production
 
-If you encounter any issues, please try the following steps:
+```bash
+npm run build
+```
 
-1. Check the logs using `docker compose logs -f`
-2. Ensure all required ports are available
-3. Verify the configuration in `docker-compose.yml`
-4. Try forcing a data reinitialization
+## ❓ Troubleshooting
 
-## 📝 Contributing
+<details>
+<summary>Common Issues and Solutions</summary>
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. If the container fails to start, check:
 
-## 📄 License
+    - If port 7001 is already in use
+    - If the data directory has correct permissions
+    - If the Docker service is running properly
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+2. If data initialization fails:
+    - Check logs with `docker compose logs -f` or `npm run pm2:logs`
+    - Make sure the data directory is writable
+    - Try using `FORCE_INIT=true` to reinitialize
+
+3. PM2 related issues:
+    - Check PM2 logs: `npm run pm2:logs`
+    - Memory limit restart: Check the `max_memory_restart` configuration
+    - Cluster mode issues: Make sure the `instances` configuration is appropriate
+<!-- 4. 默认账号与密码
+    - 默认账号密码在项目目录 `/data/config.json` 中 -->
+4. Default Account and Password
+    - The default account and password are located in the project directory /data/config.json
+</details>
+
+## 🤝 Contributing
+
+Contributions of any kind are welcome!
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+See the [Contributing Guide](./CONTRIBUTING.md) for more details.
+
+## 📜 License
+
+This project is licensed under the [MIT License](./LICENSE).
 
 ## 📮 Contact
 
 If you have any questions or suggestions, please feel free to open an issue. 
+
+Project Maintainer: [Benjamin](niuma@chatbot.cab)
+
+GitHub: [@Benjamin](https://github.com/zqq-nuli)
+
+---
+
+<div align="center">
+
+**If you find this project useful, please give it a ⭐️**
+
+</div> 
