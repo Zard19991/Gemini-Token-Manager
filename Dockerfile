@@ -20,9 +20,7 @@ RUN npm install --omit=dev --legacy-peer-deps --no-audit --no-fund && \
 RUN mkdir -p /app/data /app/logs && \
     chmod 777 /app/data /app/logs
 
-RUN node ./app/init.js
-
 EXPOSE 7001
 
-# 使用简单的启动命令，确保无误
-CMD ["sh", "-c", "node ./app/init.js && pm2-runtime ecosystem.config.js --env docker"]
+# 修改启动命令，移除init.js的执行
+CMD ["pm2-runtime", "ecosystem.config.js", "--env", "docker"]
