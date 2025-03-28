@@ -16,7 +16,7 @@
                 class="logo" />
             <h1>GeminiAPI Key Sharing</h1>
             <div class="subtitle">API密钥共享与负载均衡服务</div>
-            <a href="https://github.com/Dr-Ai-0018/Siliconflow-API-Management" target="_blank" class="github-link">
+            <a href="https://github.com/zqq-nuli/Gemini-Token-Manager" target="_blank" class="github-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path
@@ -126,7 +126,7 @@
                     </div>
 
                     <h3>支持的端点</h3>
-                    <p>我们支持Gemini的所有API端点，您只需将原始API地址替换为我们的代理地址即可：</p>
+                    <p>我们支持Gemini的 OpenAI兼容的所有API端点，您只需将原始API地址替换为我们的代理地址即可：</p>
 
                     <div>
                         <div class="code-header">
@@ -154,7 +154,7 @@
                     <p>要使用该服务，您需要申请专属的API Key。请联系管理员获取访问权限：</p>
 
                     <div class="contact-info">
-                        管理员邮箱：<a href="mailto:admin@killerbest.com">admin@killerbest.com</a>
+                        管理员邮箱：<a target="_blank" href="https://linux.do/t/topic/516127/51">https://linux.do/t/topic/516127/51</a>
                     </div>
 
                     <h3>主要优势</h3>
@@ -180,49 +180,52 @@
 <script>
     const url = new URL(window.location.href);
     const projectDomain = url.origin;
-    const copyCodeOne = `curl -X POST '${projectDomain}/v1/models/gemini-2.0-flash:generateContent' \\
+    const copyCodeOne = `curl -X POST '${projectDomain}/v1/chat/completions' \\
 -H 'Content-Type: application/json' \\
 -H 'Authorization: Bearer your-api-key-here' \\
 -d '{
-  "contents": [
+  "model": "gemini-1.5-flash",
+  "messages": [
     {
-      "parts": [
-        {
-          "text": "你好，请介绍一下你自己"
-        }
-      ]
+      "role": "user", 
+      "content": "你好，请介绍一下你自己"
     }
-  ]
+  ],
+  "temperature": 0.7
 }'`
 
-    const copyCodeTwo = `# 原始API地址
-https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash...
+    const copyCodeTwo = `# 原始 OpenAI API 地址
+https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
 
 # 替换为
-${projectDomain}/v1/models/gemini-2.0-flash...`
+${projectDomain}/v1/chat/completions
+
+# 查询支持的模型
+${projectDomain}/v1/models
+`
 
     // 添加Python示例代码
     const copyCodePython = `import requests
 import json
 
-url = "${projectDomain}/v1/models/gemini-2.0-flash:generateContent"
+# 配置API基础URL和密钥
+url = "${projectDomain}/v1/chat/completions"
 headers = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer your-api-key-here"
-}
-payload = {
-    "contents": [
-        {
-            "parts": [
-                {
-                    "text": "你好，请介绍一下你自己"
-                }
-            ]
-        }
-    ]
+    "Authorization": "Bearer your-api-key-here"  # 替换为您的API密钥
 }
 
+# 准备请求数据
+payload = {
+    "model": "gemini-1.5-flash",
+    "messages": [{"role": "user", "content": "你好，请介绍一下你自己"}],
+    "temperature": 0.7
+}
+
+# 发送请求
 response = requests.post(url, headers=headers, json=payload)
+
+# 打印响应
 print(response.json())`;
 
     // 使用JavaScript替换复制按钮的data-copy属性和代码示例显示
@@ -248,15 +251,14 @@ print(response.json())`;
                 .replace(/-d '({.*})'/, (match, p1) => {
                     // 格式化JSON部分
                     return `-d '{
-  <span class="string">"contents"</span>: [
+  <span class="string">"model"</span>: <span class="string">"gemini-1.5-flash"</span>,
+  <span class="string">"messages"</span>: [
     {
-      <span class="string">"parts"</span>: [
-        {
-          <span class="string">"text"</span>: <span class="string">"你好，请介绍一下你自己"</span>
-        }
-      ]
+      <span class="string">"role"</span>: <span class="string">"user"</span>, 
+      <span class="string">"content"</span>: <span class="string">"你好，请介绍一下你自己"</span>
     }
-  ]
+  ],
+  <span class="string">"temperature"</span>: 0.7
 }'`;
                 });
 
@@ -274,6 +276,8 @@ print(response.json())`;
             lines.forEach(line => {
                 if (line.startsWith('#')) {
                     formattedCode += `<span class="comment">${line}</span>\n`;
+                } else if (line.startsWith('-')) {
+                    formattedCode += `<span class="list-item">${line}</span>\n`;
                 } else {
                     formattedCode += `${line}\n`;
                 }
@@ -289,15 +293,18 @@ print(response.json())`;
             // 构建Python代码块内容
             let pythonFormattedCode = copyCodePython
                 .replace(/import/g, '<span class="keyword">import</span>')
-                .replace(/url =/g, '<span class="variable">url</span> =')
-                .replace(/headers =/g, '<span class="variable">headers</span> =')
-                .replace(/payload =/g, '<span class="variable">payload</span> =')
+                .replace(/client =/g, '<span class="variable">client</span> =')
+                .replace(/openai\./g, '<span class="module">openai</span>.')
                 .replace(/response =/g, '<span class="variable">response</span> =')
+                .replace(/print/g, '<span class="keyword">print</span>')
                 .replace(/"([^"]+)":/g, '<span class="string">"$1"</span>:')
-                .replace(/"Bearer[^"]+"/g, '<span class="string">"Bearer your-api-key-here"</span>')
-                .replace(/"你好，请介绍一下你自己"/g, '<span class="string">"你好，请介绍一下你自己"</span>');
+                .replace(/"your-api-key-here"/g, '<span class="string">"your-api-key-here"</span>')
+                .replace(/"gemini-1.5-flash"/g, '<span class="string">"gemini-1.5-flash"</span>')
+                .replace(/"user"/g, '<span class="string">"user"</span>')
+                .replace(/"你好，请介绍一下你自己"/g, '<span class="string">"你好，请介绍一下你自己"</span>')
+                .replace(/# (.*)/g, '<span class="comment"># $1</span>');
 
-            apiCodeBlocks[2].innerHTML = `<span class="comment"># 使用Python发送请求到Gemini负载均衡服务</span>\n${pythonFormattedCode}`;
+            apiCodeBlocks[2].innerHTML = pythonFormattedCode;
         }
     });
 
