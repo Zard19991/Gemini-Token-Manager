@@ -1042,7 +1042,7 @@ async function saveSettings(event) {
         }
 
         // 仅当访问控制为部分开放并且输入了密码时更新访客密码
-        if (accessControl === "partial" && guestPassword) {
+        if (accessControl === "restricted" && guestPassword) {
             data.guestPassword = guestPassword;
         }
 
